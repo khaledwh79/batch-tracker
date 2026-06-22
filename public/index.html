@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batch Tracker Pro</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--pr:#2563eb;--sb:#0f172a;--sbw:260px;--bg:#f1f5f9;}
+*{font-family:'Tajawal',sans-serif;box-sizing:border-box;}
+body{background:var(--bg);margin:0;}
+#aw{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a,#1e3a8a);}
+.ac{background:#fff;border-radius:1.25rem;padding:2.5rem;width:400px;box-shadow:0 25px 50px rgba(0,0,0,.4);}
+#app{display:flex;min-height:100vh;}
+#sb{width:var(--sbw);background:var(--sb);position:fixed;top:0;bottom:0;right:0;z-index:200;display:flex;flex-direction:column;overflow-y:auto;}
+#mn{margin-right:var(--sbw);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.sbr{padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.07);}
+.sbs{padding:.4rem 1.5rem .2rem;font-size:.65rem;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin-top:.5rem;}
+.sbl{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:#94a3b8;text-decoration:none;font-size:.9rem;transition:.15s;border-right:3px solid transparent;cursor:pointer;}
+.sbl:hover{background:rgba(255,255,255,.05);color:#cbd5e1;}
+.sbl.on{background:rgba(37,99,235,.18);color:#fff;border-right-color:#2563eb;font-weight:600;}
+.sbl i{width:18px;text-align:center;}
+.sbu{padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,.07);margin-top:auto;}
+#topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.pg{display:none;padding:1.5rem;animation:fi .2s;}
+.pg.on{display:block;}
+@keyframes fi{from{opacity:.3;transform:translateY(8px)}to{opacity:1;transform:none}}
+.kpi{background:#fff;border-radius:.875rem;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.kico{width:44px;height:44px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.ct{background:#fff;border-radius:.875rem;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;}
+.cth{background:#fff;border-bottom:1px solid #f1f5f9;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;}
+.table th{background:#f8fafc;color:#64748b;font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e2e8f0!important;white-space:nowrap;}
+.table td{vertical-align:middle;font-size:.88rem;border-bottom:1px solid #f1f5f9;}
+.table tbody tr:hover{background:#fafbff;}
+.bd{display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;}
+.bb{background:#dbeafe;color:#1e40af;}.bgg{background:#dcfce7;color:#15803d;}
+.by{background:#fef9c3;color:#92400e;}.br{background:#fee2e2;color:#b91c1c;}.bgr{background:#f1f5f9;color:#475569;}
+.form-label{font-weight:600;font-size:.875rem;color:#374151;margin-bottom:.35rem;}
+.form-control,.form-select{border:1.5px solid #e2e8f0;border-radius:.625rem;padding:.5rem .875rem;font-size:.9rem;}
+.form-control:focus,.form-select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none;}
+.form-control[readonly]{background:#f8fafc;}
+.btn-primary{background:#2563eb;border:none;border-radius:.625rem;font-weight:600;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-outline-primary{border-color:#2563eb;color:#2563eb;border-radius:.625rem;font-weight:600;}
+.btn-sm{padding:.35rem .75rem;font-size:.8rem;}
+.modal-content{border:none;border-radius:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-header{border-bottom:1px solid #f1f5f9;padding:1.25rem 1.5rem;}
+.modal-footer{border-top:1px solid #f1f5f9;padding:1rem 1.5rem;}
+.tip{background:#eff6ff;border:1px solid #bfdbfe;border-radius:.625rem;padding:.625rem 1rem;font-size:.82rem;color:#1e40af;}
+#tc{position:fixed;bottom:1.5rem;left:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+.tm{padding:.75rem 1.25rem;border-radius:.75rem;color:#fff;font-size:.875rem;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.2);animation:su .3s;}
+.ts{background:#16a34a;}.te{background:#dc2626;}.ti{background:#2563eb;}
+@keyframes su{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.emp{text-align:center;padding:3rem 1rem;color:#94a3b8;}
+.emp i{font-size:2.5rem;display:block;margin-bottom:.75rem;}
+.rd{background:#fff5f5!important;}.yw{background:#fffbeb!important;}
+#onl{display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;background:#dcfce7;color:#15803d;}
+#onl.off{background:#fee2e2;color:#b91c1c;}
+@media(max-width:768px){#sb{transform:translateX(100%);transition:.25s;width:280px;}#sb.op{transform:none;}#mn{margin-right:0;}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="aw">
+  <div class="ac">
+    <div class="text-center mb-4">
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-3 mb-3" style="width:56px;height:56px;font-size:1.5rem;"><i class="bi bi-boxes"></i></div>
+      <h5 class="fw-bold text-dark mb-1">Batch Tracker Pro</h5>
+      <p class="text-muted small mb-0">نظام تتبع الخامات والإنتاج</p>
+    </div>
+    <div id="lf">
+      <div class="mb-3"><label class="form-label">البريد الإلكتروني</label><input type="email" id="le" class="form-control" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="mb-3"><label class="form-label">كلمة المرور</label><input type="password" id="lp" class="form-control" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div id="lerr" class="alert alert-danger py-2 small d-none"></div>
+      <button class="btn btn-primary w-100 py-2" onclick="doLogin()"><i class="bi bi-box-arrow-in-left me-1"></i>تسجيل الدخول</button>
+      <p class="text-center mt-3 small text-muted mb-0">ليس لديك حساب؟ <a href="#" onclick="sw('r')">إنشاء حساب</a></p>
+    </div>
+    <div id="rf" class="d-none">
+      <div class="mb-3"><label class="form-label">الاسم الكامل</label><input type="text" id="rn" class="form-control"></div>
+      <div class="mb-3"><label class="form-label">البريد الإلكتروني</label><input type="email" id="re" class="form-control"></div>
+      <div class="mb-3"><label class="form-label">كلمة المرور (6 أحرف فأكثر)</label><input type="password" id="rp" class="form-control"></div>
+      <div id="rerr" class="alert alert-danger py-2 small d-none"></div>
+      <button class="btn btn-primary w-100 py-2" onclick="doReg()">إنشاء الحساب</button>
+      <p class="text-center mt-3 small mb-0"><a href="#" onclick="sw('l')">← العودة لتسجيل الدخول</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <aside id="sb">
+    <div class="sbr">
+      <div class="d-flex align-items-center gap-2">
+        <div class="bg-primary rounded-2 text-white d-flex align-items-center justify-content-center" style="width:38px;height:38px;font-size:1.1rem;"><i class="bi bi-boxes"></i></div>
+        <div><div class="text-white fw-bold" style="font-size:.9rem;">Batch Tracker Pro</div><div style="font-size:.7rem;color:#64748b;">متعدد المستخدمين</div></div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:.5rem 0;">
+      <a class="sbl on" onclick="go('dash',this)"><i class="bi bi-speedometer2"></i>لوحة التحكم</a>
+      <div class="sbs">الخامات</div>
+      <a class="sbl" onclick="go('recv',this)"><i class="bi bi-box-arrow-in-down"></i>استلام الخامات</a>
+      <a class="sbl" onclick="go('inv',this)"><i class="bi bi-archive"></i>مخزون الخامات</a>
+      <a class="sbl" onclick="go('disp',this)"><i class="bi bi-box-arrow-up"></i>صرف الخامات</a>
+      <div class="sbs">الإنتاج</div>
+      <a class="sbl" onclick="go('prod',this)"><i class="bi bi-gear-wide-connected"></i>سجل الإنتاج</a>
+      <a class="sbl" onclick="go('trace',this)"><i class="bi bi-diagram-3"></i>التتبع الكامل</a>
+      <div class="sbs">إعدادات</div>
+      <a class="sbl" onclick="go('mats',this)"><i class="bi bi-list-ul"></i>قائمة المواد</a>
+    </nav>
+    <div class="sbu">
+      <div class="d-flex align-items-center gap-2">
+        <div id="ava" class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;flex-shrink:0;">U</div>
+        <div style="flex:1;min-width:0;">
+          <div class="text-white text-truncate" id="un" style="font-size:.85rem;">—</div>
+          <div id="ue" style="font-size:.7rem;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+        </div>
+        <button class="btn btn-sm p-1" title="تسجيل الخروج" onclick="doLogout()"><i class="bi bi-box-arrow-left text-danger fs-5"></i></button>
+      </div>
+    </div>
+  </aside>
+  <div id="mn">
+    <div id="topbar">
+      <button class="btn btn-sm d-md-none" onclick="document.getElementById('sb').classList.toggle('op')"><i class="bi bi-list fs-4"></i></button>
+      <h6 id="ptitle" class="mb-0 fw-bold" style="font-size:1.1rem;color:#0f172a;">لوحة التحكم</h6>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <span id="onl"><i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>مباشر</span>
+        <span class="text-muted small" id="tdate"></span>
+      </div>
+    </div>
+    <!-- Dashboard -->
+    <div id="pg-dash" class="pg on">
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="kpi"><div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">استلام اليوم</span><div class="kico" style="background:#dbeafe;color:#1d4ed8;"><i class="bi bi-box-arrow-in-down"></i></div></div><div class="fs-2 fw-bold" id="k1">0</div><div class="text-muted small">وصلة</div></div></div>
+        <div class="col-6 col-md-3"><div class="kpi"><div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">صرف اليوم</span><div class="kico" style="background:#fef9c3;color:#92400e;"><i class="bi bi-box-arrow-up"></i></div></div><div class="fs-2 fw-bold" id="k2">0</div><div class="text-muted small">صرفية</div></div></div>
+        <div class="col-6 col-md-3"><div class="kpi"><div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">إنتاج اليوم</span><div class="kico" style="background:#dcfce7;color:#15803d;"><i class="bi bi-gear"></i></div></div><div class="fs-2 fw-bold" id="k3">0</div><div class="text-muted small">دفعة</div></div></div>
+        <div class="col-6 col-md-3"><div class="kpi"><div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">تنبيهات مخزون</span><div class="kico" style="background:#fee2e2;color:#b91c1c;"><i class="bi bi-exclamation-triangle"></i></div></div><div class="fs-2 fw-bold text-danger" id="k4">0</div><div class="text-muted small">مادة</div></div></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6"><div class="ct h-100"><div class="cth fw-bold">آخر الاستلامات</div><div id="dR" class="p-3"></div></div></div>
+        <div class="col-md-6"><div class="ct h-100"><div class="cth fw-bold">آخر الصرفيات</div><div id="dD" class="p-3"></div></div></div>
+      </div>
+    </div>
+    <!-- Receiving -->
+    <div id="pg-recv" class="pg">
+      <div class="d-flex align-items-center justify-content-between mb-3"><h6 class="fw-bold mb-0">سجل استلام الخامات</h6><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mR"><i class="bi bi-plus-lg me-1"></i>استلام جديد</button></div>
+      <div class="ct"><div class="cth"><input type="text" class="form-control form-control-sm" style="max-width:260px" placeholder="بحث..." oninput="ft('tbR',this.value)"><span class="text-muted small" id="cR">0 سجل</span></div>
+      <div class="table-responsive"><table class="table mb-0" id="tbR"><thead><tr><th>التاريخ</th><th>الخامة</th><th>الباتش</th><th>الكمية</th><th>المورد</th><th>الانتهاء</th><th>الفحص</th><th></th></tr></thead><tbody id="bR"><tr><td colspan="8" class="text-center py-4 text-muted">جاري التحميل...</td></tr></tbody></table></div></div>
+    </div>
+    <!-- Inventory -->
+    <div id="pg-inv" class="pg">
+      <div class="d-flex align-items-center justify-content-between mb-3"><h6 class="fw-bold mb-0">مخزون الخامات</h6><select class="form-select form-select-sm" style="max-width:180px" id="iF" onchange="rInv()"><option value="all">كل المواد</option><option value="low">رصيد منخفض</option><option value="zero">نفد المخزون</option><option value="exp">قرب الانتهاء</option></select></div>
+      <div class="ct"><div class="cth"><input type="text" class="form-control form-control-sm" style="max-width:260px" placeholder="بحث..." oninput="ft('tbI',this.value)"><span class="text-muted small" id="cI">0 باتش</span></div>
+      <div class="table-responsive"><table class="table mb-0" id="tbI"><thead><tr><th>الخامة</th><th>الباتش</th><th>الوحدة</th><th>الوارد</th><th>المصروف</th><th>الرصيد</th><th>الانتهاء</th><th>الحالة</th></tr></thead><tbody id="bI"></tbody></table></div></div>
+    </div>
+    <!-- Dispatch -->
+    <div id="pg-disp" class="pg">
+      <div class="d-flex align-items-center justify-content-between mb-3"><h6 class="fw-bold mb-0">سجل صرف الخامات</h6><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mD"><i class="bi bi-plus-lg me-1"></i>صرفية جديدة</button></div>
+      <div class="ct"><div class="cth"><input type="text" class="form-control form-control-sm" style="max-width:260px" placeholder="بحث..." oninput="ft('tbD',this.value)"><span class="text-muted small" id="cD">0 سجل</span></div>
+      <div class="table-responsive"><table class="table mb-0" id="tbD"><thead><tr><th>التاريخ</th><th>الخامة</th><th>باتش الخامة</th><th>الكمية</th><th>صرف إلى</th><th>باتش الإنتاج</th><th>المسؤول</th><th></th></tr></thead><tbody id="bD"></tbody></table></div></div>
+    </div>
+    <!-- Production -->
+    <div id="pg-prod" class="pg">
+      <div class="d-flex align-items-center justify-content-between mb-3"><h6 class="fw-bold mb-0">سجل الإنتاج</h6><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mP"><i class="bi bi-plus-lg me-1"></i>دفعة إنتاج جديدة</button></div>
+      <div class="ct"><div class="cth"><input type="text" class="form-control form-control-sm" style="max-width:260px" placeholder="بحث..." oninput="ft('tbP',this.value)"><span class="text-muted small" id="cP">0 دفعة</span></div>
+      <div class="table-responsive"><table class="table mb-0" id="tbP"><thead><tr><th>التاريخ</th><th>المنتج</th><th>باتش المنتج</th><th>الكمية</th><th>الخامات المستخدمة</th><th>باتشات الخامات</th><th>الجودة</th><th></th></tr></thead><tbody id="bP"></tbody></table></div></div>
+    </div>
+    <!-- Trace -->
+    <div id="pg-trace" class="pg">
+      <h6 class="fw-bold mb-3">التتبع والتتبع العكسي</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6"><div class="ct p-3"><div class="fw-bold mb-2"><i class="bi bi-search text-primary me-1"></i>تتبع أمامي: منتج ← خامات</div><p class="text-muted small mb-2">أدخل باتش المنتج لترى كل الخامات</p><div class="input-group"><input type="text" id="tF" class="form-control" placeholder="FG-00001"><button class="btn btn-primary" onclick="trFwd()">بحث</button></div></div></div>
+        <div class="col-md-6"><div class="ct p-3"><div class="fw-bold mb-2"><i class="bi bi-arrow-repeat text-success me-1"></i>تتبع عكسي: خامة ← منتجات</div><p class="text-muted small mb-2">أدخل باتش الخامة لترى المنتجات</p><div class="input-group"><input type="text" id="tB" class="form-control" placeholder="RM-00001"><button class="btn btn-outline-success" onclick="trBwd()">بحث عكسي</button></div></div></div>
+      </div>
+      <div id="trOut"></div>
+    </div>
+    <!-- Materials -->
+    <div id="pg-mats" class="pg">
+      <div class="d-flex align-items-center justify-content-between mb-3"><h6 class="fw-bold mb-0">قائمة المواد الخام</h6><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mM"><i class="bi bi-plus-lg me-1"></i>إضافة مادة</button></div>
+      <div class="ct"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>#</th><th>الاسم</th><th>الوحدة</th><th>الحد الأدنى</th><th></th></tr></thead><tbody id="bM"></tbody></table></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal fade" id="mR" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title fw-bold"><i class="bi bi-box-arrow-in-down text-primary me-2"></i>استلام خامة جديدة</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><div class="row g-3">
+    <div class="col-md-6"><label class="form-label">تاريخ الاستلام *</label><input type="date" id="r_d" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">اسم الخامة *</label><select id="r_m" class="form-select" onchange="onRM()"><option value="">-- اختر خامة --</option></select></div>
+    <div class="col-md-4"><label class="form-label">الكمية *</label><input type="number" id="r_q" class="form-control" min="0.001" step="any"></div>
+    <div class="col-md-4"><label class="form-label">الوحدة</label><input type="text" id="r_u" class="form-control" readonly></div>
+    <div class="col-md-4"><label class="form-label">الباتش (تلقائي)</label><input type="text" id="r_b" class="form-control" readonly style="background:#f0fdf4;color:#15803d;font-weight:700;"></div>
+    <div class="col-md-6"><label class="form-label">المورد</label><input type="text" id="r_s" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">باتش المورد</label><input type="text" id="r_sb" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">تاريخ الإنتاج</label><input type="date" id="r_mf" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">تاريخ الانتهاء</label><input type="date" id="r_ex" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">حالة الفحص</label><select id="r_in" class="form-select"><option>مقبول</option><option>تحت الفحص</option><option>مرفوض</option></select></div>
+    <div class="col-md-6"><label class="form-label">المستلم</label><input type="text" id="r_rc" class="form-control"></div>
+    <div class="col-12"><label class="form-label">ملاحظات</label><textarea id="r_nt" class="form-control" rows="2"></textarea></div>
+  </div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary btn-sm" onclick="svR()"><i class="bi bi-check-lg me-1"></i>حفظ</button></div>
+</div></div></div>
+
+<div class="modal fade" id="mD" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title fw-bold"><i class="bi bi-box-arrow-up text-warning me-2"></i>صرفية خامة جديدة</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <div class="tip mb-3"><i class="bi bi-lightbulb me-1"></i><strong>(1)</strong> اختر الخامة ← <strong>(2)</strong> اختر الباتش ← <strong>(3)</strong> أدخل الكمية ← <strong>(4)</strong> اختر باتش الإنتاج</div>
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">تاريخ الصرف *</label><input type="date" id="d_d" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">اسم الخامة *</label><select id="d_m" class="form-select" onchange="onDM()"><option value="">-- اختر خامة --</option></select></div>
+      <div class="col-md-7"><label class="form-label">رقم الباتش * <small class="text-success">(الباتشات ذات رصيد فقط)</small></label><select id="d_b" class="form-select" onchange="onDB()"><option value="">-- اختر الخامة أولاً --</option></select></div>
+      <div class="col-md-5"><label class="form-label">الرصيد المتاح</label><input type="text" id="d_st" class="form-control" readonly style="background:#f0fdf4;color:#15803d;font-weight:700;"></div>
+      <div class="col-md-4"><label class="form-label">الكمية *</label><input type="number" id="d_q" class="form-control" min="0.001" step="any" oninput="chkQ()"></div>
+      <div class="col-md-4"><label class="form-label">الوحدة</label><input type="text" id="d_u" class="form-control" readonly></div>
+      <div class="col-md-4"><label class="form-label">صرف إلى</label><input type="text" id="d_to" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">باتش الإنتاج (مفتاح الربط)</label><select id="d_p" class="form-select"><option value="">-- اختر (اختياري) --</option></select></div>
+      <div class="col-md-6"><label class="form-label">المسؤول</label><input type="text" id="d_r" class="form-control"></div>
+      <div class="col-12"><label class="form-label">ملاحظات</label><textarea id="d_n" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div id="d_er" class="alert alert-danger py-2 small mt-2 d-none">⚠️ الكمية تتجاوز الرصيد المتاح</div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary btn-sm" onclick="svD()"><i class="bi bi-check-lg me-1"></i>حفظ</button></div>
+</div></div></div>
+
+<div class="modal fade" id="mP" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title fw-bold"><i class="bi bi-gear-wide-connected text-success me-2"></i>دفعة إنتاج جديدة</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><div class="row g-3">
+    <div class="col-md-6"><label class="form-label">تاريخ الإنتاج *</label><input type="date" id="p_d" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">اسم المنتج *</label><input type="text" id="p_pr" class="form-control" placeholder="مثال: كيك الشوكولاتة"></div>
+    <div class="col-md-4"><label class="form-label">الكمية *</label><input type="number" id="p_q" class="form-control" min="0.001" step="any"></div>
+    <div class="col-md-4"><label class="form-label">الوحدة</label><input type="text" id="p_u" class="form-control" placeholder="قطعة، كيلو..."></div>
+    <div class="col-md-4"><label class="form-label">الباتش (تلقائي)</label><input type="text" id="p_b" class="form-control" readonly style="background:#eff6ff;color:#1d4ed8;font-weight:700;"></div>
+    <div class="col-md-6"><label class="form-label">تاريخ انتهاء المنتج</label><input type="date" id="p_ex" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">نتيجة الجودة</label><select id="p_qc" class="form-select"><option>مقبول</option><option>تحت الفحص</option><option>مرفوض</option></select></div>
+    <div class="col-md-6"><label class="form-label">المسؤول</label><input type="text" id="p_r" class="form-control"></div>
+    <div class="col-12"><label class="form-label">ملاحظات</label><textarea id="p_n" class="form-control" rows="2"></textarea></div>
+  </div>
+  <div class="tip mt-3"><i class="bi bi-info-circle me-1"></i>بعد الحفظ: اذهب لـ <strong>صرف الخامات</strong> واختر هذا الباتش لربط الخامات تلقائياً</div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary btn-sm" onclick="svP()"><i class="bi bi-check-lg me-1"></i>حفظ</button></div>
+</div></div></div>
+
+<div class="modal fade" id="mM" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title fw-bold">إضافة مادة خام</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <div class="mb-3"><label class="form-label">اسم المادة *</label><input type="text" id="m_n" class="form-control" placeholder="طحين، سكر، زبدة..."></div>
+    <div class="mb-3"><label class="form-label">الوحدة *</label><select id="m_u" class="form-select"><option>كيلو</option><option>جرام</option><option>لتر</option><option>ملليلتر</option><option>عبوة</option><option>صفيحة</option><option>كرتونة</option><option>شيكارة</option><option>حبة</option><option>طن</option><option>علبة</option></select></div>
+    <div class="mb-3"><label class="form-label">الحد الأدنى للمخزون</label><input type="number" id="m_min" class="form-control" value="0" min="0" step="any"></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-primary btn-sm" onclick="svM()">حفظ</button></div>
+</div></div></div>
+
+<div id="tc"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── State ──────────────────────────────────────────────────────
+let ME=null, MATS=[], RCS=[], DPS=[], PRD=[];
+const $=id=>document.getElementById(id);
+const tod=()=>new Date().toISOString().slice(0,10);
+const dayTo=d=>{if(!d)return null;return Math.ceil((new Date(d)-new Date())/86400000);};
+
+// ── API helper ─────────────────────────────────────────────────
+async function api(method,url,body){
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,credentials:'include'});
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.error||'خطأ');
+  return d;
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function toast(m,t='success'){const c=$('tc'),e=document.createElement('div');e.className=`tm t${t[0]}`;e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500);}
+window.ft=(id,q)=>{document.querySelectorAll(`#${id} tbody tr`).forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';});};
+window.sw=mode=>{$('lf').classList.toggle('d-none',mode!=='l');$('rf').classList.toggle('d-none',mode!=='r');};
+
+// ── Auth ───────────────────────────────────────────────────────
+window.doLogin=async()=>{const err=$('lerr');err.classList.add('d-none');try{ME=await api('POST','/api/auth/login',{email:$('le').value.trim(),password:$('lp').value});showApp();}catch(e){err.textContent=e.message;err.classList.remove('d-none');}};
+window.doReg=async()=>{const err=$('rerr');err.classList.add('d-none');const n=$('rn').value.trim(),e=$('re').value.trim(),p=$('rp').value;if(p.length<6){err.textContent='كلمة المرور يجب أن تكون 6 أحرف على الأقل';err.classList.remove('d-none');return;}try{ME=await api('POST','/api/auth/register',{name:n,email:e,password:p});showApp();}catch(ex){err.textContent=ex.message;err.classList.remove('d-none');}};
+window.doLogout=async()=>{await api('POST','/api/auth/logout');ME=null;location.reload();};
+
+// ── SSE real-time ──────────────────────────────────────────────
+let sse=null;
+function startSSE(){
+  if(sse)return;
+  sse=new EventSource('/events');
+  sse.onopen=()=>setOnline(true);
+  sse.onerror=()=>{setOnline(false);sse=null;setTimeout(startSSE,3000);};
+  const handlers={
+    'materials:add':d=>{if(!MATS.find(x=>x.id===d.id)){MATS.push(d);MATS.sort((a,b)=>a.name.localeCompare(b.name,'ar'));rMats();popDD();}},
+    'materials:del':d=>{MATS=MATS.filter(x=>x.id!==d.id);rMats();popDD();},
+    'receipts:add':d=>{if(!RCS.find(x=>x.id===d.id)){RCS.unshift(d);rRecs();rDash();}},
+    'receipts:del':d=>{RCS=RCS.filter(x=>x.id!==d.id);rRecs();rDash();},
+    'dispatches:add':d=>{if(!DPS.find(x=>x.id===d.id)){DPS.unshift(d);rDisp();rDash();}},
+    'dispatches:del':d=>{DPS=DPS.filter(x=>x.id!==d.id);rDisp();rDash();},
+    'production:add':d=>{if(!PRD.find(x=>x.id===d.id)){PRD.unshift(d);rProd();ldProd();}},
+    'production:del':d=>{PRD=PRD.filter(x=>x.id!==d.id);rProd();ldProd();}
+  };
+  Object.entries(handlers).forEach(([ev,fn])=>sse.addEventListener(ev,e=>fn(JSON.parse(e.data))));
+}
+function setOnline(on){const el=$('onl');if(!el)return;el.className=on?'':'off';el.innerHTML=on?'<i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>مباشر':'<i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>غير متصل';el.style.cssText=on?'display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;background:#dcfce7;color:#15803d;':'display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;background:#fee2e2;color:#b91c1c;';}
+
+// ── Show App ───────────────────────────────────────────────────
+async function showApp(){
+  $('aw').style.display='none';$('app').style.display='flex';
+  $('un').textContent=ME.name;$('ue').textContent=ME.email;
+  $('ava').textContent=ME.name[0].toUpperCase();
+  $('tdate').textContent=new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  ['r_d','d_d','p_d'].forEach(id=>{if($(id))$(id).value=tod();});
+  await loadAll();
+  startSSE();
+}
+async function loadAll(){
+  [MATS,RCS,DPS,PRD]=await Promise.all([api('GET','/api/materials'),api('GET','/api/receipts'),api('GET','/api/dispatches'),api('GET','/api/production')]);
+  rMats();rRecs();rDisp();rProd();rDash();popDD();ldProd();
+}
+// Check existing session
+(async()=>{try{ME=await api('GET','/api/auth/me');showApp();}catch{}})();
+
+// ── Nav ────────────────────────────────────────────────────────
+const titles={dash:'لوحة التحكم',recv:'استلام الخامات',inv:'مخزون الخامات',disp:'صرف الخامات',prod:'سجل الإنتاج',trace:'التتبع الكامل',mats:'قائمة المواد'};
+window.go=(pg,el)=>{document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.sbl').forEach(l=>l.classList.remove('on'));$('pg-'+pg).classList.add('on');$('ptitle').textContent=titles[pg];if(el)el.classList.add('on');if(pg==='inv')rInv();if(pg==='disp')ldProd();};
+
+// ── Inventory ──────────────────────────────────────────────────
+function getInv(){const m={};RCS.forEach(r=>{if(!m[r.batch_no])m[r.batch_no]={materialName:r.material_name,batchNo:r.batch_no,unit:r.unit||'',received:0,dispatched:0,expiryDate:r.expiry_date||''};m[r.batch_no].received+=Number(r.qty)||0;});DPS.forEach(d=>{if(m[d.batch_no])m[d.batch_no].dispatched+=Number(d.qty)||0;});return Object.values(m).map(i=>({...i,balance:i.received-i.dispatched}));}
+
+// ── Materials ──────────────────────────────────────────────────
+function popDD(){['r_m','d_m'].forEach(id=>{const s=$(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">-- اختر خامة --</option>'+MATS.map(m=>`<option value="${m.name}">${m.name}</option>`).join('');s.value=v;});}
+window.onRM=async()=>{const m=MATS.find(x=>x.name===$('r_m').value);$('r_u').value=m?.unit||'';const d=await api('GET','/api/receipts/next-batch');$('r_b').value=d.batch;};
+window.svM=async()=>{const n=$('m_n').value.trim();if(!n){toast('اسم المادة مطلوب','error');return;}try{await api('POST','/api/materials',{name:n,unit:$('m_u').value,min_level:parseFloat($('m_min').value)||0});$('m_n').value='';bootstrap.Modal.getInstance($('mM'))?.hide();toast('تمت إضافة المادة');}catch(e){toast(e.message,'error');}};
+window.dlM=async(id,n)=>{if(!confirm(`حذف "${n}"؟`))return;await api('DELETE',`/api/materials/${id}`);toast('تم الحذف','error');};
+function rMats(){const tb=$('bM');if(!MATS.length){tb.innerHTML='<tr><td colspan="5"><div class="emp"><i class="bi bi-list-ul"></i>لا توجد مواد</div></td></tr>';return;}tb.innerHTML=MATS.map((m,i)=>`<tr><td>${i+1}</td><td class="fw-semibold">${m.name}</td><td><span class="bd bgr">${m.unit}</span></td><td>${m.min_level||0}</td><td><button class="btn btn-sm btn-outline-danger" onclick="dlM(${m.id},'${m.name.replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');}
+
+// ── Receipts ───────────────────────────────────────────────────
+$('mR').addEventListener('show.bs.modal',async()=>{$('r_d').value=tod();const d=await api('GET','/api/receipts/next-batch');$('r_b').value=d.batch;});
+window.svR=async()=>{const m=MATS.find(x=>x.name===$('r_m').value),q=parseFloat($('r_q').value);if(!$('r_m').value||!q||!$('r_d').value){toast('يرجى ملء: التاريخ، الخامة، الكمية','error');return;}try{const rec=await api('POST','/api/receipts',{date:$('r_d').value,material_name:$('r_m').value,qty:q,unit:m?.unit||$('r_u').value,supplier:$('r_s').value,supplier_batch:$('r_sb').value,production_date:$('r_mf').value,expiry_date:$('r_ex').value,inspection_status:$('r_in').value,receiver:$('r_rc').value,notes:$('r_nt').value});['r_m','r_q','r_s','r_sb','r_mf','r_ex','r_rc','r_nt'].forEach(id=>$(id).value='');$('r_d').value=tod();bootstrap.Modal.getInstance($('mR'))?.hide();toast(`✅ تم الاستلام — الباتش: ${rec.batch_no}`);}catch(e){toast(e.message,'error');}};
+window.dlR=async id=>{if(!confirm('حذف هذا الاستلام؟'))return;await api('DELETE',`/api/receipts/${id}`);toast('تم الحذف','error');};
+function rRecs(){const tb=$('bR');if($('cR'))$('cR').textContent=RCS.length+' سجل';if(!RCS.length){tb.innerHTML='<tr><td colspan="8"><div class="emp"><i class="bi bi-inbox"></i>لا توجد استلامات</div></td></tr>';return;}const ic={مقبول:'bgg','تحت الفحص':'by',مرفوض:'br'};tb.innerHTML=RCS.map(r=>{const d=dayTo(r.expiry_date);const xn=d===null?'':(d<0?'<span class="bd br ms-1">منتهي</span>':d<=30?`<span class="bd by ms-1">بعد ${d}ي</span>`:'');return`<tr><td>${r.date||'—'}</td><td class="fw-semibold">${r.material_name}</td><td><span class="bd bb">${r.batch_no}</span></td><td>${r.qty} <small class="text-muted">${r.unit||''}</small></td><td>${r.supplier||'—'}</td><td>${r.expiry_date||'—'}${xn}</td><td><span class="bd ${ic[r.inspection_status]||'bgr'}">${r.inspection_status||'—'}</span></td><td><button class="btn btn-sm btn-outline-danger" onclick="dlR(${r.id})"><i class="bi bi-trash"></i></button></td></tr>`;}).join('');}
+
+// ── Inventory render ───────────────────────────────────────────
+function rInv(){const f=$('iF')?.value||'all';let it=getInv();if(f==='low')it=it.filter(i=>{const m=MATS.find(x=>x.name===i.materialName);return i.balance>0&&m&&i.balance<=m.min_level;});if(f==='zero')it=it.filter(i=>i.balance<=0);if(f==='exp')it=it.filter(i=>dayTo(i.expiryDate)!==null&&dayTo(i.expiryDate)<=30);if($('cI'))$('cI').textContent=it.length+' باتش';const tb=$('bI');if(!it.length){tb.innerHTML='<tr><td colspan="8"><div class="emp"><i class="bi bi-archive"></i>لا توجد بيانات</div></td></tr>';return;}tb.innerHTML=it.map(i=>{const m=MATS.find(x=>x.name===i.materialName);let sc='bgg',sl='🟢 متوفر';if(i.balance<=0){sc='br';sl='🔴 نفد';}else if(m&&i.balance<=m.min_level){sc='by';sl='🟠 منخفض';}const d=dayTo(i.expiryDate);const xn=d===null?'':(d<0?'<span class="bd br ms-1">منتهي</span>':d<=30?`<span class="bd by ms-1">بعد ${d}ي</span>`:'');return`<tr class="${i.balance<=0?'rd':m&&i.balance<=m.min_level?'yw':''}"><td class="fw-semibold">${i.materialName}</td><td><span class="bd bb">${i.batchNo}</span></td><td>${i.unit}</td><td>${i.received}</td><td>${i.dispatched}</td><td class="fw-bold">${i.balance}</td><td>${i.expiryDate||'—'}${xn}</td><td><span class="bd ${sc}">${sl}</span></td></tr>`;}).join('');}
+window.rInv=rInv;
+
+// ── Dispatch ───────────────────────────────────────────────────
+window.onDM=()=>{const m=MATS.find(x=>x.name===$('d_m').value);$('d_u').value=m?.unit||'';const av=getInv().filter(i=>i.materialName===$('d_m').value&&i.balance>0);const bs=$('d_b');bs.innerHTML='<option value="">-- اختر باتش --</option>'+av.map(i=>`<option value="${i.batchNo}" data-s="${i.balance}">${i.batchNo}  (رصيد: ${i.balance} ${i.unit})</option>`).join('');$('d_st').value='';};
+window.onDB=()=>{const o=$('d_b').selectedOptions[0];$('d_st').value=o?.dataset.s||'';};
+window.chkQ=()=>{const q=parseFloat($('d_q').value)||0,s=parseFloat($('d_st').value)||0;$('d_er').classList.toggle('d-none',!(s>0&&q>s));};
+function ldProd(){const s=$('d_p');if(!s)return;const v=s.value;s.innerHTML='<option value="">-- اختر (اختياري) --</option>'+PRD.map(p=>`<option value="${p.batch_no}">${p.batch_no} — ${p.product_name}</option>`).join('');s.value=v;}
+$('mD').addEventListener('show.bs.modal',()=>{$('d_d').value=tod();ldProd();});
+window.svD=async()=>{const m=$('d_m').value,b=$('d_b').value,q=parseFloat($('d_q').value),s=parseFloat($('d_st').value)||0;if(!m||!b||!q||!$('d_d').value){toast('يرجى ملء: التاريخ، الخامة، الباتش، الكمية','error');return;}if(q>s&&s>0){toast('الكمية تتجاوز الرصيد المتاح','error');return;}try{await api('POST','/api/dispatches',{date:$('d_d').value,material_name:m,batch_no:b,qty:q,unit:$('d_u').value,issued_to:$('d_to').value,production_batch:$('d_p').value,responsible:$('d_r').value,notes:$('d_n').value});['d_m','d_b','d_q','d_to','d_p','d_r','d_n'].forEach(id=>$(id).value='');$('d_st').value='';$('d_u').value='';$('d_d').value=tod();bootstrap.Modal.getInstance($('mD'))?.hide();toast('✅ تم حفظ الصرفية');}catch(e){toast(e.message,'error');}};
+window.dlD=async id=>{if(!confirm('حذف هذه الصرفية؟'))return;await api('DELETE',`/api/dispatches/${id}`);toast('تم الحذف','error');};
+function rDisp(){const tb=$('bD');if($('cD'))$('cD').textContent=DPS.length+' سجل';if(!DPS.length){tb.innerHTML='<tr><td colspan="8"><div class="emp"><i class="bi bi-box-arrow-up"></i>لا توجد صرفيات</div></td></tr>';return;}tb.innerHTML=DPS.map(d=>`<tr><td>${d.date||'—'}</td><td class="fw-semibold">${d.material_name}</td><td><span class="bd bb">${d.batch_no}</span></td><td>${d.qty} <small class="text-muted">${d.unit||''}</small></td><td>${d.issued_to||'—'}</td><td>${d.production_batch?`<span class="bd bgg">${d.production_batch}</span>`:'—'}</td><td>${d.responsible||'—'}</td><td><button class="btn btn-sm btn-outline-danger" onclick="dlD(${d.id})"><i class="bi bi-trash"></i></button></td></tr>`).join('');}
+
+// ── Production ─────────────────────────────────────────────────
+$('mP').addEventListener('show.bs.modal',async()=>{$('p_d').value=tod();const d=await api('GET','/api/production/next-batch');$('p_b').value=d.batch;});
+window.svP=async()=>{const pr=$('p_pr').value.trim(),q=parseFloat($('p_q').value);if(!pr||!q||!$('p_d').value){toast('يرجى ملء: التاريخ، اسم المنتج، الكمية','error');return;}try{const rec=await api('POST','/api/production',{date:$('p_d').value,product_name:pr,qty:q,unit:$('p_u').value,expiry_date:$('p_ex').value,qc_result:$('p_qc').value,responsible:$('p_r').value,notes:$('p_n').value});['p_pr','p_q','p_u','p_ex','p_r','p_n'].forEach(id=>$(id).value='');$('p_d').value=tod();bootstrap.Modal.getInstance($('mP'))?.hide();toast(`✅ دفعة إنتاج جديدة — الباتش: ${rec.batch_no}`);}catch(e){toast(e.message,'error');}};
+window.dlP=async id=>{if(!confirm('حذف هذا السجل؟'))return;await api('DELETE',`/api/production/${id}`);toast('تم الحذف','error');};
+function rProd(){const tb=$('bP');if($('cP'))$('cP').textContent=PRD.length+' دفعة';if(!PRD.length){tb.innerHTML='<tr><td colspan="8"><div class="emp"><i class="bi bi-gear"></i>لا يوجد إنتاج</div></td></tr>';return;}const qc={مقبول:'bgg','تحت الفحص':'by',مرفوض:'br'};tb.innerHTML=PRD.map(p=>{const lk=DPS.filter(d=>d.production_batch===p.batch_no);const ms=[...new Set(lk.map(d=>d.material_name))].join(', ')||'—';const bs=lk.length?[...new Set(lk.map(d=>d.batch_no))].map(b=>`<span class="bd bb">${b}</span>`).join(' '):'—';return`<tr><td>${p.date||'—'}</td><td class="fw-semibold">${p.product_name}</td><td><span class="bd bb">${p.batch_no}</span></td><td>${p.qty} <small class="text-muted">${p.unit||''}</small></td><td class="small text-muted">${ms}</td><td class="small">${bs}</td><td><span class="bd ${qc[p.qc_result]||'bgr'}">${p.qc_result||'—'}</span></td><td><button class="btn btn-sm btn-outline-danger" onclick="dlP(${p.id})"><i class="bi bi-trash"></i></button></td></tr>`;}).join('');}
+
+// ── Traceability ───────────────────────────────────────────────
+window.trFwd=()=>{const pb=$('tF').value.trim();if(!pb){toast('أدخل رقم الباتش','error');return;}const p=PRD.find(x=>x.batch_no===pb),ds=DPS.filter(d=>d.production_batch===pb);const ri=ds.map(d=>({...d,rec:RCS.find(r=>r.batch_no===d.batch_no)}));$('trOut').innerHTML=`<div class="ct p-4"><div class="d-flex align-items-center gap-3 mb-4"><div style="width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;color:#1d4ed8;font-size:1.2rem;"><i class="bi bi-box-seam"></i></div><div><div class="text-muted small">باتش المنتج</div><div class="fw-bold fs-5"><span class="bd bb me-2">${pb}</span>${p?.product_name||'—'}</div><div class="text-muted small">${p?.date||''} · ${p?.qty||''} ${p?.unit||''} · ${p?.qc_result||''}</div></div></div><h6 class="fw-bold mb-3">الخامات المستخدمة (${ri.length})</h6>${ri.length?`<div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>الخامة</th><th>باتش الخامة</th><th>الكمية</th><th>المورد</th><th>تاريخ الاستلام</th><th>تاريخ الانتهاء</th><th>الفحص</th></tr></thead><tbody>${ri.map(d=>`<tr><td class="fw-semibold">${d.material_name}</td><td><span class="bd bb">${d.batch_no}</span></td><td>${d.qty} ${d.unit||''}</td><td>${d.rec?.supplier||'—'}</td><td>${d.rec?.date||'—'}</td><td>${d.rec?.expiry_date||'—'}</td><td>${d.rec?.inspection_status||'—'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="alert alert-warning small">لا توجد خامات مربوطة — تأكد من اختيار باتش الإنتاج عند الصرف</div>'}</div>`;};
+window.trBwd=()=>{const rb=$('tB').value.trim();if(!rb){toast('أدخل رقم الباتش','error');return;}const r=RCS.find(x=>x.batch_no===rb),ds=DPS.filter(d=>d.batch_no===rb);const pbs=[...new Set(ds.map(d=>d.production_batch).filter(Boolean))];const ps=pbs.map(b=>({b,...PRD.find(p=>p.batch_no===b)}));$('trOut').innerHTML=`<div class="ct p-4"><div class="d-flex align-items-center gap-3 mb-4"><div style="width:44px;height:44px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#15803d;font-size:1.2rem;"><i class="bi bi-box-arrow-in-down"></i></div><div><div class="text-muted small">باتش الخامة</div><div class="fw-bold fs-5"><span class="bd bgg me-2">${rb}</span>${r?.material_name||'غير موجود'}</div><div class="text-muted small">${r?`استلام: ${r.date||''} · مورد: ${r.supplier||'—'} · انتهاء: ${r.expiry_date||'—'}`:'لا توجد بيانات'}</div></div></div><h6 class="fw-bold mb-3">المنتجات التي استُخدمت فيها (${ps.length})</h6>${ps.length?`<div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>باتش المنتج</th><th>اسم المنتج</th><th>تاريخ الإنتاج</th><th>الكمية</th><th>انتهاء المنتج</th><th>الجودة</th></tr></thead><tbody>${ps.map(p=>`<tr><td><span class="bd bb">${p.b}</span></td><td class="fw-semibold">${p.product_name||'—'}</td><td>${p.date||'—'}</td><td>${p.qty||'—'} ${p.unit||''}</td><td>${p.expiry_date||'—'}</td><td>${p.qc_result||'—'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="alert alert-info small">لم تُستخدم في أي دفعة حتى الآن</div>'}</div>`;};
+
+// ── Dashboard ──────────────────────────────────────────────────
+function rDash(){const t=tod();$('k1').textContent=RCS.filter(r=>r.date===t).length;$('k2').textContent=DPS.filter(d=>d.date===t).length;$('k3').textContent=PRD.filter(p=>p.date===t).length;const iv=getInv();$('k4').textContent=iv.filter(i=>{const m=MATS.find(x=>x.name===i.materialName);return i.balance<=0||(m&&i.balance<=m.min_level);}).length;const mk=(rows,cols)=>rows.length?`<table class="table table-sm table-hover mb-0">${cols}<tbody>${rows}</tbody></table>`:'<div class="emp"><i class="bi bi-inbox"></i>لا توجد بيانات</div>';$('dR').innerHTML=mk(RCS.slice(0,5).map(r=>`<tr><td>${r.material_name}</td><td><span class="bd bb">${r.batch_no}</span></td><td class="text-muted small">${r.date||''}</td></tr>`).join(''),'<thead><tr><th>الخامة</th><th>الباتش</th><th>التاريخ</th></tr></thead>');$('dD').innerHTML=mk(DPS.slice(0,5).map(d=>`<tr><td>${d.material_name}</td><td><span class="bd bb">${d.batch_no}</span></td><td>${d.production_batch?`<span class="bd bgg">${d.production_batch}</span>`:'—'}</td></tr>`).join(''),'<thead><tr><th>الخامة</th><th>الباتش</th><th>باتش الإنتاج</th></tr></thead>');}
+</script>
+</body>
+</html>
