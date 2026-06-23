@@ -1,114 +1,238 @@
 #!/usr/bin/env python3
-"""
-Batch Tracker Pro — Pure Python server (no external packages)
-Uses: sqlite3, http.server, threading, json — all built into Python 3
-Real-time via Server-Sent Events (SSE) — works in all browsers
-"""
-import sqlite3, hashlib, json, threading, time, os, sys, secrets
+"""Batch Tracker Pro v2 – pure-stdlib HTTP server"""
+import os, json, sqlite3, hashlib, secrets, threading, time, queue
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from urllib.parse import urlparse, parse_qs
-from datetime import datetime
-import webbrowser
 
-# ── Config ─────────────────────────────────────────────
-PORT = int(os.environ.get('PORT', 3000))
-DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'batchtracker.db')
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+# ── Config ──────────────────────────────────────────────────────────────────
+PORT    = int(os.environ.get('PORT', 3000))
+BASE    = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get('DB_PATH', os.path.join(BASE, 'data.db'))
+PUBLIC  = os.path.join(BASE, 'public')
 
-# ── SSE Subscribers ────────────────────────────────────
-_subscribers = []
-_sub_lock = threading.Lock()
+PREFIXES = {
+    'receipts':      'RM',
+    'dispatches':    'DSP',
+    'pkg_receipts':  'PKG',
+    'pkg_dispatches':'PKGD',
+    'production':    'FG',
+}
 
-def sse_broadcast(event, data):
-    msg = f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-    dead = []
-    with _sub_lock:
-        for q in _subscribers:
-            try:
-                q.put(msg)
-            except:
-                dead.append(q)
-        for q in dead:
-            _subscribers.remove(q)
-
-# Simple thread-safe queue
-class Queue:
-    def __init__(self): self._items=[]; self._lock=threading.Lock(); self._cond=threading.Condition(self._lock)
-    def put(self, item):
-        with self._cond: self._items.append(item); self._cond.notify()
-    def get(self, timeout=30):
-        with self._cond:
-            if not self._items: self._cond.wait(timeout)
-            return self._items.pop(0) if self._items else None
-
-# ── Database ───────────────────────────────────────────
-def get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+MIME = {
+    '.html': 'text/html; charset=utf-8',
+    '.js':   'application/javascript',
+    '.css':  'text/css',
+    '.ico':  'image/x-icon',
+    '.png':  'image/png',
+    '.json': 'application/json',
+}
 
 db_lock = threading.Lock()
-_db = get_db()
+sse_clients: list[queue.Queue] = []
+sse_lock = threading.Lock()
 
-def db_exec(sql, params=()):
-    with db_lock:
-        _db.execute(sql, params); _db.commit()
+# ── DB ───────────────────────────────────────────────────────────────────────
+def get_db():
+    c = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
+    c.row_factory = sqlite3.Row
+    c.execute("PRAGMA journal_mode=WAL")
+    c.execute("PRAGMA foreign_keys=ON")
+    return c
 
-def db_one(sql, params=()):
+def init_db():
+    os.makedirs(os.path.dirname(DB_PATH) if os.path.dirname(DB_PATH) else '.', exist_ok=True)
     with db_lock:
-        return dict(_db.execute(sql, params).fetchone() or {})
+        c = get_db()
+        c.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            pw_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'user',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS counters (
+            name TEXT PRIMARY KEY,
+            val  INTEGER DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            unit TEXT DEFAULT 'kg',
+            min_level REAL DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS pkg_materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            unit TEXT DEFAULT 'piece',
+            min_level REAL DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS receipts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            batch_no TEXT UNIQUE,
+            material_name TEXT NOT NULL,
+            supplier TEXT,
+            qty REAL NOT NULL,
+            unit TEXT DEFAULT 'kg',
+            lot_no TEXT,
+            expiry_date TEXT,
+            received_date TEXT DEFAULT (date('now')),
+            notes TEXT,
+            created_by TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS dispatches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            batch_no TEXT UNIQUE,
+            material_name TEXT NOT NULL,
+            qty REAL NOT NULL,
+            unit TEXT DEFAULT 'kg',
+            purpose TEXT,
+            dispatch_date TEXT DEFAULT (date('now')),
+            notes TEXT,
+            created_by TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS pkg_receipts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            batch_no TEXT UNIQUE,
+            material_name TEXT NOT NULL,
+            supplier TEXT,
+            qty REAL NOT NULL,
+            unit TEXT DEFAULT 'piece',
+            lot_no TEXT,
+            expiry_date TEXT,
+            received_date TEXT DEFAULT (date('now')),
+            notes TEXT,
+            created_by TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS pkg_dispatches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            batch_no TEXT UNIQUE,
+            material_name TEXT NOT NULL,
+            qty REAL NOT NULL,
+            unit TEXT DEFAULT 'piece',
+            purpose TEXT,
+            dispatch_date TEXT DEFAULT (date('now')),
+            notes TEXT,
+            created_by TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS production (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            batch_no TEXT UNIQUE,
+            product_name TEXT NOT NULL,
+            customer TEXT,
+            qty REAL NOT NULL,
+            unit TEXT DEFAULT 'kg',
+            production_date TEXT DEFAULT (date('now')),
+            expiry_date TEXT,
+            notes TEXT,
+            created_by TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        """)
+        c.commit()
+        # default admin
+        ph = hashlib.sha256(b'admin').hexdigest()
+        try:
+            c.execute("INSERT INTO users (username,pw_hash,role) VALUES ('admin',?,'admin')", (ph,))
+            c.commit()
+        except sqlite3.IntegrityError:
+            pass
+        # counters
+        for nm in PREFIXES:
+            try:
+                c.execute("INSERT INTO counters (name,val) VALUES (?,0)", (nm,))
+                c.commit()
+            except sqlite3.IntegrityError:
+                pass
+        c.close()
 
 def db_all(sql, params=()):
     with db_lock:
-        rows = _db.execute(sql, params).fetchall()
+        c = get_db()
+        rows = c.execute(sql, params).fetchall()
+        c.close()
         return [dict(r) for r in rows]
 
-# Schema
-with db_lock:
-    _db.executescript("""
-    CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,email TEXT UNIQUE,password TEXT,created_at TEXT DEFAULT(datetime('now')));
-    CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id INTEGER,user_name TEXT,user_email TEXT,created_at TEXT DEFAULT(datetime('now')));
-    CREATE TABLE IF NOT EXISTS counters(name TEXT PRIMARY KEY,value INTEGER DEFAULT 0);
-    CREATE TABLE IF NOT EXISTS materials(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE,unit TEXT,min_level REAL DEFAULT 0,created_at TEXT DEFAULT(datetime('now')));
-    CREATE TABLE IF NOT EXISTS receipts(id INTEGER PRIMARY KEY AUTOINCREMENT,date TEXT,material_name TEXT,batch_no TEXT UNIQUE,qty REAL,unit TEXT,supplier TEXT,supplier_batch TEXT,production_date TEXT,expiry_date TEXT,inspection_status TEXT DEFAULT 'مقبول',receiver TEXT,notes TEXT,created_by INTEGER,created_at TEXT DEFAULT(datetime('now')));
-    CREATE TABLE IF NOT EXISTS dispatches(id INTEGER PRIMARY KEY AUTOINCREMENT,date TEXT,material_name TEXT,batch_no TEXT,qty REAL,unit TEXT,issued_to TEXT,production_batch TEXT,responsible TEXT,notes TEXT,created_by INTEGER,created_at TEXT DEFAULT(datetime('now')));
-    CREATE TABLE IF NOT EXISTS production(id INTEGER PRIMARY KEY AUTOINCREMENT,date TEXT,product_name TEXT,batch_no TEXT UNIQUE,qty REAL,unit TEXT,expiry_date TEXT,qc_result TEXT DEFAULT 'مقبول',responsible TEXT,notes TEXT,created_by INTEGER,created_at TEXT DEFAULT(datetime('now')));
-    INSERT OR IGNORE INTO counters(name,value) VALUES('receipts',0);
-    INSERT OR IGNORE INTO counters(name,value) VALUES('production',0);
-    """)
-    _db.commit()
-
-def next_batch(name, prefix):
+def db_one(sql, params=()):
     with db_lock:
-        _db.execute("UPDATE counters SET value=value+1 WHERE name=?", (name,))
-        _db.commit()
-        row = _db.execute("SELECT value FROM counters WHERE name=?", (name,)).fetchone()
-        return f"{prefix}-{str(row[0]).zfill(5)}"
+        c = get_db()
+        row = c.execute(sql, params).fetchone()
+        c.close()
+        return dict(row) if row else {}
 
-def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
+def db_exec(sql, params=()):
+    with db_lock:
+        c = get_db()
+        cur = c.execute(sql, params)
+        c.commit()
+        lid = cur.lastrowid
+        c.close()
+        return lid
 
-def get_session(token):
-    if not token: return None
-    return db_one("SELECT * FROM sessions WHERE token=?", (token,)) or None
+def next_batch(table):
+    prefix = PREFIXES.get(table, 'XX')
+    with db_lock:
+        c = get_db()
+        c.execute("UPDATE counters SET val=val+1 WHERE name=?", (table,))
+        c.commit()
+        row = c.execute("SELECT val FROM counters WHERE name=?", (table,)).fetchone()
+        c.close()
+        return f"{prefix}-{row['val']:05d}"
 
-# ── HTTP Handler ───────────────────────────────────────
+# ── SSE ──────────────────────────────────────────────────────────────────────
+def broadcast(event_type: str, data: dict):
+    msg = f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+    with sse_lock:
+        dead = []
+        for q in sse_clients:
+            try:
+                q.put_nowait(msg)
+            except queue.Full:
+                dead.append(q)
+        for q in dead:
+            sse_clients.remove(q)
+
+# ── Auth ─────────────────────────────────────────────────────────────────────
+def check_session(handler):
+    cookie = handler.headers.get('Cookie', '')
+    for part in cookie.split(';'):
+        part = part.strip()
+        if part.startswith('session='):
+            token = part[8:]
+            row = db_one("SELECT username FROM sessions WHERE token=?", (token,))
+            if row:
+                return row['username']
+    return None
+
+def set_cookie(handler, token):
+    secure = handler.headers.get('X-Forwarded-Proto', '') == 'https'
+    same = 'None; Secure' if secure else 'Lax'
+    handler.send_header('Set-Cookie',
+        f'session={token}; Path=/; HttpOnly; SameSite={same}')
+
+# ── Handler ──────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
-    def log_message(self, fmt, *args): pass  # Suppress default logs
-
-    def get_token(self):
-        cookies = self.headers.get('Cookie','')
-        for c in cookies.split(';'):
-            c=c.strip()
-            if c.startswith('bt_session='):
-                return c[11:]
-        return None
+    def log_message(self, fmt, *args):
+        pass  # silence logs
 
     def send_json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode()
         self.send_response(status)
-        self.send_header('Content-Type','application/json; charset=utf-8')
-        self.send_header('Content-Length', len(body))
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
@@ -116,206 +240,349 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json({'error': msg}, status)
 
     def read_body(self):
-        l = int(self.headers.get('Content-Length',0))
-        if l: return json.loads(self.rfile.read(l))
-        return {}
+        length = int(self.headers.get('Content-Length', 0))
+        return json.loads(self.rfile.read(length)) if length else {}
 
-    def do_GET(self):
-        p = urlparse(self.path).path
-        # Static files
-        if p == '/' or p == '/index.html':
-            return self.serve_file(os.path.join(os.path.dirname(__file__),'public','index.html'),'text/html')
-        # SSE endpoint
-        if p == '/events':
-            return self.handle_sse()
-        # API
-        tok = self.get_token()
-        me = get_session(tok)
-        if p == '/api/auth/me':
-            if not me: return self.send_err('غير مصرح',401)
-            return self.send_json({'id':me['user_id'],'name':me['user_name'],'email':me['user_email']})
-        if not me: return self.send_err('غير مصرح',401)
-        if p=='/api/materials': return self.send_json(db_all("SELECT * FROM materials ORDER BY name"))
-        if p=='/api/receipts': return self.send_json(db_all("SELECT * FROM receipts ORDER BY created_at DESC"))
-        if p=='/api/receipts/next-batch':
-            row=db_one("SELECT value FROM counters WHERE name='receipts'")
-            return self.send_json({'batch':f"RM-{str(row['value']+1).zfill(5)}"})
-        if p=='/api/dispatches': return self.send_json(db_all("SELECT * FROM dispatches ORDER BY created_at DESC"))
-        if p=='/api/production': return self.send_json(db_all("SELECT * FROM production ORDER BY created_at DESC"))
-        if p=='/api/production/next-batch':
-            row=db_one("SELECT value FROM counters WHERE name='production'")
-            return self.send_json({'batch':f"FG-{str(row['value']+1).zfill(5)}"})
-        self.send_err('Not found',404)
-
-    def do_POST(self):
-        p = urlparse(self.path).path
-        body = self.read_body()
-        # Auth — no session needed
-        if p=='/api/auth/register':
-            n=body.get('name','').strip(); e=body.get('email','').strip(); pw=body.get('password','')
-            if not n or not e or not pw: return self.send_err('جميع الحقول مطلوبة')
-            try:
-                with db_lock:
-                    _db.execute("INSERT INTO users(name,email,password) VALUES(?,?,?)",(n,e,hash_pw(pw)))
-                    uid=_db.execute("SELECT last_insert_rowid()").fetchone()[0]
-                    _db.commit()
-                tok=secrets.token_hex(32)
-                db_exec("INSERT INTO sessions(token,user_id,user_name,user_email) VALUES(?,?,?,?)",(tok,uid,n,e))
-                self.send_response(200)
-                self.send_header('Content-Type','application/json')
-                self.send_header('Set-Cookie',f'bt_session={tok}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=604800')
-                self.end_headers()
-                self.wfile.write(json.dumps({'id':uid,'name':n,'email':e},ensure_ascii=False).encode())
-            except Exception as ex:
-                if 'UNIQUE' in str(ex): return self.send_err('البريد مستخدم بالفعل',409)
-                return self.send_err(str(ex),500)
-            return
-        if p=='/api/auth/login':
-            e=body.get('email',''); pw=body.get('password','')
-            user=db_one("SELECT * FROM users WHERE email=? AND password=?",(e,hash_pw(pw)))
-            if not user: return self.send_err('البريد أو كلمة المرور غير صحيحة',401)
-            tok=secrets.token_hex(32)
-            db_exec("INSERT INTO sessions(token,user_id,user_name,user_email) VALUES(?,?,?,?)",(tok,user['id'],user['name'],user['email']))
-            self.send_response(200)
-            self.send_header('Content-Type','application/json')
-            self.send_header('Set-Cookie',f'bt_session={tok}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=604800')
-            self.end_headers()
-            self.wfile.write(json.dumps({'id':user['id'],'name':user['name'],'email':user['email']},ensure_ascii=False).encode())
-            return
-        if p=='/api/auth/logout':
-            tok=self.get_token()
-            if tok: db_exec("DELETE FROM sessions WHERE token=?",(tok,))
-            self.send_response(200); self.send_header('Content-Type','application/json')
-            self.send_header('Set-Cookie','bt_session=; Path=/; Max-Age=0')
-            self.end_headers(); self.wfile.write(b'{"ok":true}'); return
-        # Protected routes
-        tok=self.get_token(); me=get_session(tok)
-        if not me: return self.send_err('غير مصرح',401)
-        uid=me['user_id']
-        if p=='/api/materials':
-            n=body.get('name','').strip(); u=body.get('unit','كيلو'); ml=body.get('min_level',0)
-            if not n: return self.send_err('الاسم مطلوب')
-            try:
-                db_exec("INSERT INTO materials(name,unit,min_level) VALUES(?,?,?)",(n,u,ml))
-                mat=db_one("SELECT * FROM materials WHERE name=?",(n,))
-                sse_broadcast('materials:add',mat); return self.send_json(mat)
-            except Exception as ex:
-                if 'UNIQUE' in str(ex): return self.send_err('هذه المادة موجودة',409)
-                return self.send_err(str(ex),500)
-        if p=='/api/receipts':
-            d=body.get('date',''); mn=body.get('material_name',''); q=body.get('qty',0)
-            if not d or not mn or not q: return self.send_err('التاريخ والخامة والكمية مطلوبة')
-            bn=next_batch('receipts','RM')
-            db_exec("INSERT INTO receipts(date,material_name,batch_no,qty,unit,supplier,supplier_batch,production_date,expiry_date,inspection_status,receiver,notes,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (d,mn,bn,q,body.get('unit',''),body.get('supplier',''),body.get('supplier_batch',''),body.get('production_date',''),body.get('expiry_date',''),body.get('inspection_status','مقبول'),body.get('receiver',''),body.get('notes',''),uid))
-            rec=db_one("SELECT * FROM receipts WHERE batch_no=?",(bn,))
-            sse_broadcast('receipts:add',rec); return self.send_json(rec)
-        if p=='/api/dispatches':
-            d=body.get('date',''); mn=body.get('material_name',''); bn=body.get('batch_no',''); q=body.get('qty',0)
-            if not d or not mn or not bn or not q: return self.send_err('البيانات الأساسية مطلوبة')
-            db_exec("INSERT INTO dispatches(date,material_name,batch_no,qty,unit,issued_to,production_batch,responsible,notes,created_by) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (d,mn,bn,q,body.get('unit',''),body.get('issued_to',''),body.get('production_batch',''),body.get('responsible',''),body.get('notes',''),uid))
-            with db_lock: rid=_db.execute("SELECT last_insert_rowid()").fetchone()[0]
-            rec=db_one("SELECT * FROM dispatches WHERE id=?",(rid,))
-            sse_broadcast('dispatches:add',rec); return self.send_json(rec)
-        if p=='/api/production':
-            d=body.get('date',''); pn=body.get('product_name',''); q=body.get('qty',0)
-            if not d or not pn or not q: return self.send_err('التاريخ والمنتج والكمية مطلوبة')
-            bn=next_batch('production','FG')
-            db_exec("INSERT INTO production(date,product_name,batch_no,qty,unit,expiry_date,qc_result,responsible,notes,created_by) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (d,pn,bn,q,body.get('unit',''),body.get('expiry_date',''),body.get('qc_result','مقبول'),body.get('responsible',''),body.get('notes',''),uid))
-            rec=db_one("SELECT * FROM production WHERE batch_no=?",(bn,))
-            sse_broadcast('production:add',rec); return self.send_json(rec)
-        self.send_err('Not found',404)
-
-    def do_DELETE(self):
-        p = urlparse(self.path).path
-        tok=self.get_token(); me=get_session(tok)
-        if not me: return self.send_err('غير مصرح',401)
-        parts=p.strip('/').split('/')
-        if len(parts)==3 and parts[0]=='api':
-            tbl=parts[1]; rid=parts[2]
-            tables={'materials':'materials','receipts':'receipts','dispatches':'dispatches','production':'production'}
-            events={'materials':'materials:del','receipts':'receipts:del','dispatches':'dispatches:del','production':'production:del'}
-            if tbl in tables:
-                db_exec(f"DELETE FROM {tables[tbl]} WHERE id=?",(rid,))
-                sse_broadcast(events[tbl],{'id':int(rid)})
-                return self.send_json({'ok':True})
-        self.send_err('Not found',404)
-
-    def do_OPTIONS(self):
-        self.send_response(200); self.send_header('Access-Control-Allow-Origin','*')
-        self.send_header('Access-Control-Allow-Methods','GET,POST,DELETE,OPTIONS')
-        self.send_header('Access-Control-Allow-Headers','Content-Type'); self.end_headers()
-
-    def handle_sse(self):
-        q = Queue()
-        with _sub_lock: _subscribers.append(q)
+    def serve_static(self, path):
+        if '..' in path:
+            self.send_err('forbidden', 403); return
+        fp = os.path.join(PUBLIC, path.lstrip('/'))
+        if os.path.isdir(fp):
+            fp = os.path.join(fp, 'index.html')
+        if not os.path.exists(fp):
+            self.send_err('not found', 404); return
+        ext = os.path.splitext(fp)[1]
+        mime = MIME.get(ext, 'application/octet-stream')
+        with open(fp, 'rb') as f:
+            body = f.read()
         self.send_response(200)
-        self.send_header('Content-Type','text/event-stream')
-        self.send_header('Cache-Control','no-cache')
-        self.send_header('Connection','keep-alive')
-        self.send_header('Access-Control-Allow-Origin','*')
+        self.send_header('Content-Type', mime)
+        self.send_header('Content-Length', str(len(body)))
         self.end_headers()
-        # Send initial ping
-        try:
-            self.wfile.write(b"event: ping\ndata: {}\n\n")
-            self.wfile.flush()
-        except: pass
-        while True:
+        self.wfile.write(body)
+
+    # ── GET ──────────────────────────────────────────────────────────────────
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        path   = parsed.path.rstrip('/')
+        qs     = parse_qs(parsed.query)
+
+        # SSE
+        if path == '/api/events':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/event-stream')
+            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Connection', 'keep-alive')
+            self.end_headers()
+            q = queue.Queue(maxsize=50)
+            with sse_lock:
+                sse_clients.append(q)
             try:
-                msg = q.get(timeout=25)
-                if msg is None:
-                    # Heartbeat
-                    self.wfile.write(b": heartbeat\n\n")
-                    self.wfile.flush()
-                    continue
-                self.wfile.write(msg.encode('utf-8'))
+                self.wfile.write(b': connected\n\n')
                 self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
-                break
+                while True:
+                    try:
+                        msg = q.get(timeout=25)
+                        self.wfile.write(msg.encode())
+                        self.wfile.flush()
+                    except queue.Empty:
+                        self.wfile.write(b': ping\n\n')
+                        self.wfile.flush()
             except Exception:
-                break
-        with _sub_lock:
-            if q in _subscribers: _subscribers.remove(q)
+                pass
+            finally:
+                with sse_lock:
+                    if q in sse_clients:
+                        sse_clients.remove(q)
+            return
 
-    def serve_file(self, path, ct):
-        try:
-            with open(path,'rb') as f: data=f.read()
-            self.send_response(200); self.send_header('Content-Type',ct+'; charset=utf-8')
-            self.send_header('Content-Length',len(data)); self.end_headers(); self.wfile.write(data)
-        except FileNotFoundError: self.send_err('Not found',404)
+        # Auth check for API
+        if path.startswith('/api/') and path not in ('/api/login',):
+            user = check_session(self)
+            if not user:
+                self.send_err('unauthorized', 401); return
+        else:
+            user = check_session(self)
 
-# ── Heartbeat thread ───────────────────────────────────
-def heartbeat():
-    while True:
-        time.sleep(20)
-        with _sub_lock:
-            for q in list(_subscribers):
-                try: q.put(None)
-                except: pass
-threading.Thread(target=heartbeat, daemon=True).start()
+        if path == '/api/me':
+            u = check_session(self)
+            return self.send_json({'username': u} if u else {'username': None})
 
-# ── Start ──────────────────────────────────────────────
-if __name__ == '__main__':
-    from socketserver import ThreadingMixIn
-    class ThreadedServer(ThreadingMixIn, HTTPServer):
-        daemon_threads = True
-    srv = ThreadedServer(('0.0.0.0', PORT), Handler)
-    print(f"""
-╔══════════════════════════════════════════╗
-║        Batch Tracker Pro ✅              ║
-║    نظام تتبع الخامات والإنتاج            ║
-╠══════════════════════════════════════════╣
-║  🌐  http://localhost:{PORT}               ║
-║  📱  شارك الرابط مع زملائك على نفس الشبكة ║
-╚══════════════════════════════════════════╝
-""")
+        if path == '/api/dashboard':
+            rm_count  = db_one("SELECT COUNT(*) as c FROM receipts")['c']
+            dsp_count = db_one("SELECT COUNT(*) as c FROM dispatches")['c']
+            pkg_r     = db_one("SELECT COUNT(*) as c FROM pkg_receipts")['c']
+            pkg_d     = db_one("SELECT COUNT(*) as c FROM pkg_dispatches")['c']
+            prod      = db_one("SELECT COUNT(*) as c FROM production")['c']
+            low_rm    = db_all("""
+                SELECT m.name, m.min_level,
+                    COALESCE((SELECT SUM(qty) FROM receipts WHERE material_name=m.name),0)
+                    - COALESCE((SELECT SUM(qty) FROM dispatches WHERE material_name=m.name),0) as bal
+                FROM materials m
+                WHERE bal < m.min_level AND m.min_level > 0""")
+            low_pkg   = db_all("""
+                SELECT m.name, m.min_level,
+                    COALESCE((SELECT SUM(qty) FROM pkg_receipts WHERE material_name=m.name),0)
+                    - COALESCE((SELECT SUM(qty) FROM pkg_dispatches WHERE material_name=m.name),0) as bal
+                FROM pkg_materials m
+                WHERE bal < m.min_level AND m.min_level > 0""")
+            return self.send_json({
+                'rm_receipts': rm_count, 'rm_dispatches': dsp_count,
+                'pkg_receipts': pkg_r, 'pkg_dispatches': pkg_d,
+                'production': prod,
+                'low_rm': low_rm, 'low_pkg': low_pkg,
+            })
+
+        # Materials
+        if path == '/api/materials':
+            return self.send_json(db_all("SELECT * FROM materials ORDER BY name"))
+        if path == '/api/pkg_materials':
+            return self.send_json(db_all("SELECT * FROM pkg_materials ORDER BY name"))
+
+        # Receipts
+        if path == '/api/receipts':
+            return self.send_json(db_all("SELECT * FROM receipts ORDER BY created_at DESC"))
+        if path == '/api/pkg_receipts':
+            return self.send_json(db_all("SELECT * FROM pkg_receipts ORDER BY created_at DESC"))
+
+        # Dispatches
+        if path == '/api/dispatches':
+            return self.send_json(db_all("SELECT * FROM dispatches ORDER BY created_at DESC"))
+        if path == '/api/pkg_dispatches':
+            return self.send_json(db_all("SELECT * FROM pkg_dispatches ORDER BY created_at DESC"))
+
+        # Inventory
+        if path == '/api/inventory':
+            rows = db_all("SELECT material_name, MAX(unit) as unit, SUM(qty) as total_in FROM receipts GROUP BY material_name ORDER BY material_name")
+            for r in rows:
+                out = db_one("SELECT COALESCE(SUM(qty),0) as s FROM dispatches WHERE material_name=?", (r['material_name'],))
+                ml  = db_one("SELECT min_level FROM materials WHERE name=?", (r['material_name'],))
+                r['total_out'] = out.get('s', 0) or 0
+                r['balance']   = (r['total_in'] or 0) - r['total_out']
+                r['min_level'] = ml.get('min_level', 0) or 0
+            return self.send_json(rows)
+
+        if path == '/api/pkg_inventory':
+            rows = db_all("SELECT material_name, MAX(unit) as unit, SUM(qty) as total_in FROM pkg_receipts GROUP BY material_name ORDER BY material_name")
+            for r in rows:
+                out = db_one("SELECT COALESCE(SUM(qty),0) as s FROM pkg_dispatches WHERE material_name=?", (r['material_name'],))
+                ml  = db_one("SELECT min_level FROM pkg_materials WHERE name=?", (r['material_name'],))
+                r['total_out'] = out.get('s', 0) or 0
+                r['balance']   = (r['total_in'] or 0) - r['total_out']
+                r['min_level'] = ml.get('min_level', 0) or 0
+            return self.send_json(rows)
+
+        # Production
+        if path == '/api/production':
+            return self.send_json(db_all("SELECT * FROM production ORDER BY created_at DESC"))
+
+        # Reports
+        if path == '/api/report/raw':
+            rows = db_all("""
+                SELECT material_name,
+                    COALESCE(SUM(CASE WHEN t='in' THEN qty END),0) as total_in,
+                    COALESCE(SUM(CASE WHEN t='out' THEN qty END),0) as total_out,
+                    MAX(unit) as unit
+                FROM (
+                    SELECT material_name, qty, unit, 'in' as t FROM receipts
+                    UNION ALL
+                    SELECT material_name, qty, unit, 'out' as t FROM dispatches
+                )
+                GROUP BY material_name ORDER BY material_name""")
+            for r in rows:
+                r['balance'] = r['total_in'] - r['total_out']
+            return self.send_json(rows)
+
+        if path == '/api/report/pkg':
+            rows = db_all("""
+                SELECT material_name,
+                    COALESCE(SUM(CASE WHEN t='in' THEN qty END),0) as total_in,
+                    COALESCE(SUM(CASE WHEN t='out' THEN qty END),0) as total_out,
+                    MAX(unit) as unit
+                FROM (
+                    SELECT material_name, qty, unit, 'in' as t FROM pkg_receipts
+                    UNION ALL
+                    SELECT material_name, qty, unit, 'out' as t FROM pkg_dispatches
+                )
+                GROUP BY material_name ORDER BY material_name""")
+            for r in rows:
+                r['balance'] = r['total_in'] - r['total_out']
+            return self.send_json(rows)
+
+        if path == '/api/report/prod':
+            return self.send_json(db_all(
+                "SELECT product_name, customer, SUM(qty) as total_qty, MAX(unit) as unit, COUNT(*) as batches "
+                "FROM production GROUP BY product_name, customer ORDER BY product_name"))
+
+        # Trace
+        if path == '/api/trace':
+            q_val = qs.get('q', [''])[0].strip()
+            if not q_val:
+                return self.send_json({'results': []})
+            like = f'%{q_val}%'
+            results = []
+            for tbl, label in [('receipts','استلام خام'), ('dispatches','صرف خام'),
+                                ('pkg_receipts','استلام تعبئة'), ('pkg_dispatches','صرف تعبئة'),
+                                ('production','إنتاج')]:
+                cols = "batch_no, material_name" if tbl != 'production' else "batch_no, product_name as material_name"
+                rws = db_all(f"SELECT {cols}, created_at FROM {tbl} WHERE batch_no LIKE ? OR material_name LIKE ?", (like, like))
+                for r in rws:
+                    r['source'] = label
+                results.extend(rws)
+            return self.send_json({'results': results})
+
+        # Static files
+        if not path.startswith('/api'):
+            return self.serve_static(path or '/')
+
+        self.send_err('not found', 404)
+
+    # ── POST ─────────────────────────────────────────────────────────────────
+    def do_POST(self):
+        path = urlparse(self.path).path.rstrip('/')
+        data = self.read_body()
+
+        # Login
+        if path == '/api/login':
+            u = data.get('username', '').strip()
+            p = data.get('password', '')
+            ph = hashlib.sha256(p.encode()).hexdigest()
+            row = db_one("SELECT id,username FROM users WHERE username=? AND pw_hash=?", (u, ph))
+            if not row:
+                return self.send_err('بيانات الدخول غير صحيحة', 401)
+            token = secrets.token_hex(32)
+            db_exec("INSERT INTO sessions (token,user_id,username) VALUES (?,?,?)",
+                    (token, row['id'], row['username']))
+            self.send_response(200)
+            set_cookie(self, token)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'ok': True, 'username': row['username']}).encode())
+            return
+
+        # Auth required for everything else
+        user = check_session(self)
+        if not user:
+            return self.send_err('unauthorized', 401)
+
+        if path == '/api/logout':
+            cookie = self.headers.get('Cookie', '')
+            for part in cookie.split(';'):
+                part = part.strip()
+                if part.startswith('session='):
+                    db_exec("DELETE FROM sessions WHERE token=?", (part[8:],))
+            return self.send_json({'ok': True})
+
+        # Materials
+        if path == '/api/materials':
+            nm = data.get('name', '').strip()
+            if not nm: return self.send_err('name required')
+            db_exec("INSERT OR IGNORE INTO materials (name,unit,min_level) VALUES (?,?,?)",
+                    (nm, data.get('unit','kg'), float(data.get('min_level',0))))
+            broadcast('update', {'type':'materials'})
+            return self.send_json({'ok': True})
+
+        if path == '/api/pkg_materials':
+            nm = data.get('name', '').strip()
+            if not nm: return self.send_err('name required')
+            db_exec("INSERT OR IGNORE INTO pkg_materials (name,unit,min_level) VALUES (?,?,?)",
+                    (nm, data.get('unit','piece'), float(data.get('min_level',0))))
+            broadcast('update', {'type':'pkg_materials'})
+            return self.send_json({'ok': True})
+
+        # Raw receipts
+        if path == '/api/receipts':
+            bn = next_batch('receipts')
+            db_exec("""INSERT INTO receipts (batch_no,material_name,supplier,qty,unit,lot_no,expiry_date,received_date,notes,created_by)
+                       VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    (bn, data['material_name'], data.get('supplier',''),
+                     float(data['qty']), data.get('unit','kg'),
+                     data.get('lot_no',''), data.get('expiry_date',''),
+                     data.get('received_date', ''), data.get('notes',''), user))
+            broadcast('update', {'type':'receipts','batch_no':bn})
+            return self.send_json({'ok': True, 'batch_no': bn})
+
+        # Raw dispatches
+        if path == '/api/dispatches':
+            bn = next_batch('dispatches')
+            db_exec("""INSERT INTO dispatches (batch_no,material_name,qty,unit,purpose,dispatch_date,notes,created_by)
+                       VALUES (?,?,?,?,?,?,?,?)""",
+                    (bn, data['material_name'], float(data['qty']),
+                     data.get('unit','kg'), data.get('purpose',''),
+                     data.get('dispatch_date',''), data.get('notes',''), user))
+            broadcast('update', {'type':'dispatches','batch_no':bn})
+            return self.send_json({'ok': True, 'batch_no': bn})
+
+        # Pkg receipts
+        if path == '/api/pkg_receipts':
+            bn = next_batch('pkg_receipts')
+            db_exec("""INSERT INTO pkg_receipts (batch_no,material_name,supplier,qty,unit,lot_no,expiry_date,received_date,notes,created_by)
+                       VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    (bn, data['material_name'], data.get('supplier',''),
+                     float(data['qty']), data.get('unit','piece'),
+                     data.get('lot_no',''), data.get('expiry_date',''),
+                     data.get('received_date',''), data.get('notes',''), user))
+            broadcast('update', {'type':'pkg_receipts','batch_no':bn})
+            return self.send_json({'ok': True, 'batch_no': bn})
+
+        # Pkg dispatches
+        if path == '/api/pkg_dispatches':
+            bn = next_batch('pkg_dispatches')
+            db_exec("""INSERT INTO pkg_dispatches (batch_no,material_name,qty,unit,purpose,dispatch_date,notes,created_by)
+                       VALUES (?,?,?,?,?,?,?,?)""",
+                    (bn, data['material_name'], float(data['qty']),
+                     data.get('unit','piece'), data.get('purpose',''),
+                     data.get('dispatch_date',''), data.get('notes',''), user))
+            broadcast('update', {'type':'pkg_dispatches','batch_no':bn})
+            return self.send_json({'ok': True, 'batch_no': bn})
+
+        # Production
+        if path == '/api/production':
+            bn = next_batch('production')
+            db_exec("""INSERT INTO production (batch_no,product_name,customer,qty,unit,production_date,expiry_date,notes,created_by)
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (bn, data['product_name'], data.get('customer',''),
+                     float(data['qty']), data.get('unit','kg'),
+                     data.get('production_date',''), data.get('expiry_date',''),
+                     data.get('notes',''), user))
+            broadcast('update', {'type':'production','batch_no':bn})
+            return self.send_json({'ok': True, 'batch_no': bn})
+
+        self.send_err('not found', 404)
+
+    # ── DELETE ────────────────────────────────────────────────────────────────
+    def do_DELETE(self):
+        path = urlparse(self.path).path.rstrip('/')
+        user = check_session(self)
+        if not user:
+            return self.send_err('unauthorized', 401)
+
+        parts = path.split('/')
+        # /api/<table>/<id>
+        if len(parts) == 4 and parts[1] == 'api':
+            tbl = parts[2]
+            rid = parts[3]
+            allowed = ['receipts','dispatches','pkg_receipts','pkg_dispatches','production','materials','pkg_materials']
+            if tbl not in allowed:
+                return self.send_err('forbidden', 403)
+            db_exec(f"DELETE FROM {tbl} WHERE id=?", (rid,))
+            broadcast('update', {'type': tbl})
+            return self.send_json({'ok': True})
+
+        self.send_err('not found', 404)
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+
+def main():
+    init_db()
+    server = ThreadedHTTPServer(('0.0.0.0', PORT), Handler)
+    print(f"Batch Tracker Pro v2 running on port {PORT}")
     try:
-        webbrowser.open(f'http://localhost:{PORT}')
-    except: pass
-    try:
-        srv.serve_forever()
+        server.serve_forever()
     except KeyboardInterrupt:
-        print('\n⛔ تم إيقاف البرنامج')
-        srv.shutdown()
+        pass
+
+if __name__ == '__main__':
+    main()
