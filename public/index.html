@@ -1,890 +1,1035 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Batch Tracker Pro v2</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet"/>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Batch Tracker Pro</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   body{font-family:'Tajawal',sans-serif;background:#f0f2f5}
-  .sidebar{width:240px;min-height:100vh;background:#1e293b;position:fixed;right:0;top:0;z-index:100;overflow-y:auto}
-  .sidebar .brand{padding:1.2rem 1rem;border-bottom:1px solid #334155;color:#f1f5f9;font-weight:700;font-size:1.1rem}
-  .sidebar .nav-link{color:#94a3b8;padding:.6rem 1rem;border-radius:.375rem;margin:.1rem .5rem;cursor:pointer;transition:all .2s}
-  .sidebar .nav-link:hover,.sidebar .nav-link.active{background:#3b82f6;color:#fff}
-  .sidebar .nav-section{color:#64748b;font-size:.75rem;padding:.8rem 1rem .2rem;text-transform:uppercase;letter-spacing:.05em}
-  .main{margin-right:240px;padding:1.5rem}
-  .card{border:none;border-radius:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-  .badge-low{background:#fef3c7;color:#92400e;padding:.25rem .6rem;border-radius:9999px;font-size:.75rem}
-  #loginScreen{position:fixed;inset:0;background:#1e293b;z-index:9999;display:flex;align-items:center;justify-content:center}
-  .stat-card{background:#fff;border-radius:.75rem;padding:1.2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-  .stat-card .num{font-size:2rem;font-weight:700;color:#3b82f6}
-  .stat-card .lbl{color:#64748b;font-size:.85rem}
-  table{font-size:.875rem}
+  .sidebar{width:230px;min-height:100vh;background:linear-gradient(180deg,#1a3a5c,#0d6efd);position:fixed;top:0;right:0;z-index:100;overflow-y:auto}
+  .sidebar .nav-link{color:rgba(255,255,255,.8);padding:.6rem 1.2rem;border-radius:.4rem;margin:.1rem .5rem;font-size:.92rem;transition:all .2s}
+  .sidebar .nav-link:hover,.sidebar .nav-link.active{background:rgba(255,255,255,.2);color:#fff}
+  .sidebar .nav-link i{width:20px;display:inline-block;text-align:center}
+  .main-content{margin-right:230px;padding:20px}
   .section{display:none}.section.active{display:block}
-  .btn-del{color:#ef4444;background:none;border:none;cursor:pointer;padding:.2rem .4rem}
-  .btn-del:hover{color:#dc2626}
-  .alert-low{background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:.5rem;padding:.6rem 1rem;font-size:.85rem}
+  .card{border:none;border-radius:.75rem;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+  .card-header{background:transparent;border-bottom:1px solid #eee;font-weight:700;font-size:1rem}
+  .table th{background:#f8f9fa;font-weight:600;font-size:.85rem}
+  .table td{font-size:.85rem;vertical-align:middle}
+  .badge-batch{background:#e8f4fd;color:#0d6efd;padding:.3rem .6rem;border-radius:.4rem;font-family:monospace;font-size:.82rem;font-weight:600}
+  .badge-supplier{background:#e8f8e8;color:#198754;padding:.2rem .5rem;border-radius:.4rem;font-size:.78rem}
+  .btn-xs{padding:.15rem .45rem;font-size:.78rem}
+  .stat-card{border-radius:.75rem;padding:1.2rem;color:#fff;text-align:center}
+  .alert-expiry{background:#fff3cd;border-right:4px solid #ffc107;padding:.5rem .8rem;border-radius:.4rem;font-size:.85rem;margin:.3rem 0}
+  .trace-chain{background:#f8f9fa;border-radius:.6rem;padding:1rem;margin:.5rem 0}
+  .trace-node{background:#fff;border:2px solid #dee2e6;border-radius:.5rem;padding:.7rem;margin:.4rem 0;position:relative}
+  .trace-node.node-receipt{border-color:#198754}
+  .trace-node.node-dispatch{border-color:#fd7e14}
+  .trace-node.node-production{border-color:#0d6efd}
+  .trace-node.node-customer{border-color:#6f42c1}
+  .trace-arrow{text-align:center;color:#6c757d;font-size:1.2rem;margin:.2rem 0}
+  .customer-row{background:#f0f8ff;border-radius:.4rem;padding:.5rem;margin:.3rem 0;border-right:3px solid #6f42c1}
+  #loginSection{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a3a5c,#0d6efd)}
+  .login-card{width:360px;border-radius:1rem;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .sidebar-brand{padding:1.2rem;border-bottom:1px solid rgba(255,255,255,.2);margin-bottom:.5rem}
+  .low-stock{background:#fff3cd}
+  .out-stock{background:#f8d7da}
+  @media(max-width:768px){.sidebar{width:60px}.sidebar .nav-link span{display:none}.main-content{margin-right:60px}}
 </style>
-
-<!-- Raw materials datalist -->
-<datalist id="rawMatList">
-  <option value="دقيق قمح"><option value="سكر أبيض"><option value="ملح طعام">
-  <option value="زيت نباتي"><option value="سمن نباتي"><option value="زبدة">
-  <option value="حليب بودرة"><option value="مسحوق الكاكاو"><option value="نشا ذرة">
-  <option value="خميرة جافة"><option value="بيكنج باودر"><option value="فانيليا">
-  <option value="قرفة مطحونة"><option value="فلفل أسود"><option value="كمون مطحون">
-  <option value="كركم"><option value="ماء مقطر"><option value="حامض ليموني">
-  <option value="صودا الخبيز"><option value="جيلاتين"><option value="نكهة فراولة">
-  <option value="نكهة برتقال"><option value="نكهة ليمون"><option value="صبغة غذائية حمراء">
-  <option value="صبغة غذائية صفراء"><option value="مستخلص الشعير">
-</datalist>
-
-<!-- Packaging materials datalist -->
-<datalist id="pkgMatList">
-  <option value="علب كرتون 250 جم"><option value="علب كرتون 500 جم"><option value="علب كرتون 1 كجم">
-  <option value="علب كرتون 2 كجم"><option value="علب كرتون 5 كجم"><option value="أكياس بلاستيك 100 جم">
-  <option value="أكياس بلاستيك 250 جم"><option value="أكياس بلاستيك 500 جم"><option value="أكياس بلاستيك 1 كجم">
-  <option value="أكياس بلاستيك 2 كجم"><option value="أكياس بلاستيك 5 كجم"><option value="غطاء بلاستيك صغير">
-  <option value="غطاء بلاستيك كبير"><option value="ملصقات لاصقة"><option value="شريط لاصق شفاف">
-  <option value="شريط لاصق بني"><option value="صناديق تغليف كرتون صغير"><option value="صناديق تغليف كرتون كبير">
-  <option value="رقائق ألومنيوم 100م"><option value="رقائق ألومنيوم 200م"><option value="أكياس فاكيوم صغير">
-  <option value="أكياس فاكيوم كبير"><option value="أكياس ستاند أب 100 جم"><option value="أكياس ستاند أب 250 جم">
-  <option value="أكياس ستاند أب 500 جم"><option value="أكياس ستاند أب 1 كجم"><option value="علب بلاستيك مستطيل صغير">
-  <option value="علب بلاستيك مستطيل كبير"><option value="علب بلاستيك دائرية صغير"><option value="علب بلاستيك دائرية كبير">
-  <option value="جرات زجاجية 100 مل"><option value="جرات زجاجية 250 مل"><option value="جرات زجاجية 500 مل">
-  <option value="جرات زجاجية 1 لتر"><option value="أنابيب بلاستيك 50 مل"><option value="أنابيب بلاستيك 100 مل">
-  <option value="ورق تغليف مشمع"><option value="فويل تغليف ذهبي"><option value="فويل تغليف فضي">
-  <option value="أكياس ورقية صغير"><option value="أكياس ورقية كبير"><option value="حاويات بلاستيك شفاف">
-  <option value="أغطية مدورة 63 مم"><option value="أغطية مدورة 82 مم"><option value="أغطية مدورة 110 مم">
-  <option value="براغي بلاستيكية صغير"><option value="براغي بلاستيكية كبير"><option value="أربطة بلاستيكية">
-  <option value="دبابيس تثبيت"><option value="صواني كرتون مستطيل"><option value="صواني كرتون دائرية">
-  <option value="أكواب ورقية 100 مل"><option value="أكواب ورقية 200 مل"><option value="أكواب ورقية 300 مل">
-  <option value="قوارير PET 250 مل"><option value="قوارير PET 500 مل"><option value="قوارير PET 1 لتر">
-  <option value="قوارير HDPE 500 مل"><option value="قوارير HDPE 1 لتر"><option value="علب معدن صغير">
-  <option value="علب معدن كبير"><option value="ختم حراري رول صغير"><option value="ختم حراري رول كبير">
-  <option value="أكياس مفرغة هواء"><option value="وسادات هوائية تغليف"><option value="فلين حماية صغير">
-  <option value="فلين حماية كبير"><option value="خيط تعبئة أبيض"><option value="خيط تعبئة أسود">
-  <option value="شرائط شد بلاستيك"><option value="شرائط شد معدن"><option value="علب هدايا مزخرفة">
-  <option value="حقائب ورقية مع مقبض"><option value="أغلفة حرارية شفافة"><option value="أغلفة حرارية ملونة">
-</datalist>
-
 </head>
 <body>
 
-<!-- Login Screen -->
-<div id="loginScreen">
-  <div class="card p-4" style="width:340px;background:#fff">
-    <div class="text-center mb-3">
-      <div style="font-size:2.5rem">🏭</div>
-      <h5 class="fw-bold mb-0">Batch Tracker Pro</h5>
-      <small class="text-muted">v2.0 – نظام تتبع الدفعات</small>
-    </div>
-    <div id="loginErr" class="alert alert-danger d-none py-2"></div>
-    <div class="mb-3">
-      <label class="form-label fw-bold">اسم المستخدم</label>
-      <input id="loginUser" type="text" class="form-control" value="admin" placeholder="username"/>
-    </div>
-    <div class="mb-3">
-      <label class="form-label fw-bold">كلمة المرور</label>
-      <input id="loginPass" type="password" class="form-control" value="admin"/>
-    </div>
-    <button class="btn btn-primary w-100 fw-bold" onclick="doLogin()">دخول / Login</button>
+<!-- Login -->
+<div id="loginSection">
+<div class="card login-card p-4">
+  <div class="text-center mb-4">
+    <h4 class="text-primary fw-bold">🏭 Batch Tracker Pro</h4>
+    <small class="text-muted">نظام إدارة الدُفعات</small>
   </div>
+  <div class="mb-3"><label class="form-label">اسم المستخدم</label>
+    <input id="li-user" class="form-control" placeholder="admin"></div>
+  <div class="mb-3"><label class="form-label">كلمة المرور</label>
+    <input id="li-pass" class="form-control" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+  <button class="btn btn-primary w-100" onclick="doLogin()">دخول</button>
+  <div id="li-err" class="text-danger text-center mt-2 d-none">بيانات غير صحيحة</div>
 </div>
+</div>
+
+<!-- App -->
+<div id="appSection" class="d-none">
 
 <!-- Sidebar -->
-<div class="sidebar">
-  <div class="brand">🏭 Batch Tracker Pro</div>
-  <div class="mt-2">
-    <div class="nav-section">الرئيسية / Main</div>
-    <div class="nav-link active" onclick="showSection('dashboard')">📊 لوحة التحكم</div>
-    <div class="nav-section">المواد الخام / Raw Materials</div>
-    <div class="nav-link" onclick="showSection('rawReceipt')">📥 استلام خام</div>
-    <div class="nav-link" onclick="showSection('rawInventory')">📦 مخزون خام</div>
-    <div class="nav-link" onclick="showSection('rawDispatch')">📤 صرف خام</div>
-    <div class="nav-section">مواد التعبئة / Packaging</div>
-    <div class="nav-link" onclick="showSection('pkgReceipt')">📥 استلام تعبئة</div>
-    <div class="nav-link" onclick="showSection('pkgInventory')">📦 مخزون تعبئة</div>
-    <div class="nav-link" onclick="showSection('pkgDispatch')">📤 صرف تعبئة</div>
-    <div class="nav-section">الإنتاج / Production</div>
-    <div class="nav-link" onclick="showSection('production')">🏭 سجلات الإنتاج</div>
-    <div class="nav-section">الأدوات / Tools</div>
-    <div class="nav-link" onclick="showSection('trace')">🔍 تتبع الدفعة</div>
-    <div class="nav-link" onclick="showSection('materials')">⚙️ إدارة المواد</div>
-    <div class="nav-link" onclick="showSection('reports')">📋 التقارير</div>
-    <div class="nav-link" onclick="showSection('manual')">📖 دليل المستخدم</div>
-    <div class="mt-3 border-top border-secondary pt-2 px-3">
-      <small class="text-secondary" id="sidebarUser"></small>
-      <div class="nav-link mt-1" onclick="doLogout()" style="font-size:.85rem">🚪 خروج / Logout</div>
-    </div>
+<nav class="sidebar">
+  <div class="sidebar-brand text-white text-center">
+    <div class="fw-bold fs-6">🏭 Batch Tracker</div>
+    <small id="navUser" class="opacity-75" style="font-size:.75rem"></small>
   </div>
-</div>
+  <ul class="nav flex-column p-1">
+    <li><a class="nav-link active" onclick="showSection('dashboard')"><i>📊</i> <span>لوحة التحكم</span></a></li>
+    <li><a class="nav-link" onclick="showSection('rawReceipt')"><i>📥</i> <span>استلام الخامات</span></a></li>
+    <li><a class="nav-link" onclick="showSection('rawInventory')"><i>📦</i> <span>مخزون الخامات</span></a></li>
+    <li><a class="nav-link" onclick="showSection('rawDispatch')"><i>📤</i> <span>صرف الخامات</span></a></li>
+    <li><a class="nav-link" onclick="showSection('pkgReceipt')"><i>📥</i> <span>استلام التعبئة</span></a></li>
+    <li><a class="nav-link" onclick="showSection('pkgInventory')"><i>📦</i> <span>مخزون التعبئة</span></a></li>
+    <li><a class="nav-link" onclick="showSection('pkgDispatch')"><i>📤</i> <span>صرف التعبئة</span></a></li>
+    <li><a class="nav-link" onclick="showSection('production')"><i>🏭</i> <span>سجل الإنتاج</span></a></li>
+    <li><a class="nav-link" onclick="showSection('reports')"><i>📈</i> <span>التقارير</span></a></li>
+    <li><a class="nav-link" onclick="showSection('trace')"><i>🔍</i> <span>التتبع</span></a></li>
+    <li><a class="nav-link" onclick="showSection('materials')"><i>⚙️</i> <span>المواد</span></a></li>
+    <li><a class="nav-link" onclick="showSection('manual')"><i>📖</i> <span>دليل المستخدم</span></a></li>
+    <li class="mt-2 border-top pt-2"><a class="nav-link text-warning" onclick="doLogout()"><i>🚪</i> <span>خروج</span></a></li>
+  </ul>
+</nav>
 
-<!-- Main Content -->
-<div class="main">
+<div class="main-content">
 
-<!-- Dashboard -->
+<!-- DASHBOARD -->
 <div id="dashboard" class="section active">
-  <h4 class="fw-bold mb-3">📊 لوحة التحكم / Dashboard</h4>
-  <div id="lowAlerts"></div>
-  <div class="row g-3 mb-4" id="statCards">
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="num" id="s-rmr">-</div><div class="lbl">استلامات خام / RM Receipts</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="num" id="s-rmd">-</div><div class="lbl">صرف خام / RM Dispatches</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="num" id="s-pkgr">-</div><div class="lbl">استلام تعبئة / PKG Receipts</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="num" id="s-prod">-</div><div class="lbl">دفعات إنتاج / Production</div></div></div>
-  </div>
-  <div class="card p-3">
-    <h6 class="fw-bold mb-2">آخر النشاطات / Recent Activity</h6>
-    <p class="text-muted small">استخدم القوائم الجانبية لعرض التفاصيل</p>
+  <h5 class="mb-3 fw-bold">📊 لوحة التحكم</h5>
+  <div id="db-stats" class="row g-3 mb-4"></div>
+  <div class="row g-3">
+    <div class="col-md-6" id="db-low-rm"></div>
+    <div class="col-md-6" id="db-low-pkg"></div>
+    <div class="col-12" id="db-expiry"></div>
   </div>
 </div>
 
-<!-- Raw Receipt -->
+<!-- RAW RECEIPT -->
 <div id="rawReceipt" class="section">
-  <h4 class="fw-bold mb-3">📥 استلام مواد خام / Raw Material Receipt</h4>
-  <div class="card p-3 mb-3">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <label class="form-label fw-bold">اسم المادة / Material <span class="text-danger">*</span></label>
-        <input id="rr-mat" class="form-control" list="rawMatList" placeholder="اختر أو اكتب..."/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الكمية / Qty <span class="text-danger">*</span></label>
-        <input id="rr-qty" type="number" class="form-control" placeholder="0"/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الوحدة / Unit</label>
-        <select id="rr-unit" class="form-select">
-          <option>kg</option><option>g</option><option>L</option><option>mL</option><option>bag</option><option>drum</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold">المورد / Supplier</label>
-        <input id="rr-sup" class="form-control" placeholder="اسم المورد..."/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">رقم اللوت / Lot No</label>
-        <input id="rr-lot" class="form-control" placeholder="LOT-XXXX"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الانتهاء / Expiry</label>
-        <input id="rr-exp" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الاستلام / Date</label>
-        <input id="rr-date" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-primary w-100 fw-bold" onclick="addRR()">💾 حفظ / Save</button>
-      </div>
-      <div class="col-12">
-        <label class="form-label fw-bold">ملاحظات / Notes</label>
-        <input id="rr-notes" class="form-control" placeholder="ملاحظات اختيارية..."/>
+  <h5 class="mb-3 fw-bold">📥 استلام الخامات</h5>
+  <div class="card mb-4">
+    <div class="card-header">إضافة استلام جديد</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4"><label class="form-label">اسم الخامة *</label>
+          <input id="rr-mat" class="form-control" list="rawMatList" placeholder="اختر أو اكتب"></div>
+        <div class="col-md-4"><label class="form-label">المورد</label>
+          <input id="rr-sup" class="form-control" placeholder="اسم المورد"></div>
+        <div class="col-md-4"><label class="form-label">باتش المورد / Supplier Batch</label>
+          <input id="rr-supbatch" class="form-control" placeholder="رقم الباتش عند المورد"></div>
+        <div class="col-md-3"><label class="form-label">الكمية *</label>
+          <input id="rr-qty" class="form-control" type="number" step="0.001" placeholder="0"></div>
+        <div class="col-md-2"><label class="form-label">الوحدة</label>
+          <select id="rr-unit" class="form-select">
+            <option>kg</option><option>g</option><option>L</option><option>mL</option><option>piece</option>
+          </select></div>
+        <div class="col-md-3"><label class="form-label">رقم اللوت</label>
+          <input id="rr-lot" class="form-control" placeholder="LOT-001"></div>
+        <div class="col-md-4"><label class="form-label">تاريخ الانتهاء</label>
+          <input id="rr-exp" class="form-control" type="date"></div>
+        <div class="col-md-4"><label class="form-label">تاريخ الاستلام</label>
+          <input id="rr-date" class="form-control" type="date"></div>
+        <div class="col-md-8"><label class="form-label">ملاحظات</label>
+          <input id="rr-notes" class="form-control" placeholder="..."></div>
+        <div class="col-12 text-end">
+          <button class="btn btn-success" onclick="saveRR()">💾 حفظ الاستلام</button></div>
       </div>
     </div>
   </div>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h6 class="fw-bold mb-0">السجلات / Records</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadRR()">🔄 تحديث</button>
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      سجل الاستلام
+      <input id="rr-search" class="form-control form-control-sm w-25" placeholder="بحث..." oninput="loadRR()">
     </div>
-    <div class="table-responsive"><table class="table table-hover table-sm" id="rrTable">
-      <thead><tr><th>رقم الدفعة</th><th>المادة</th><th>الكمية</th><th>المورد</th><th>تاريخ الاستلام</th><th>بواسطة</th><th></th></tr></thead>
-      <tbody id="rrBody"></tbody>
-    </table></div>
+    <div class="card-body p-0"><div id="rr-table" class="table-responsive"></div></div>
   </div>
 </div>
 
-<!-- Raw Inventory -->
+<!-- RAW INVENTORY -->
 <div id="rawInventory" class="section">
-  <h4 class="fw-bold mb-3">📦 مخزون المواد الخام / Raw Material Inventory</h4>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between mb-2">
-      <h6 class="fw-bold mb-0">الرصيد الحالي / Current Balance</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadRI()">🔄 تحديث</button>
-    </div>
-    <div class="table-responsive"><table class="table table-hover table-sm">
-      <thead><tr><th>المادة / Material</th><th>الكمية الواردة</th><th>الكمية المصروفة</th><th>الرصيد</th><th>الوحدة</th><th>الحد الأدنى</th><th>الحالة</th></tr></thead>
-      <tbody id="riBody"></tbody>
-    </table></div>
+  <h5 class="mb-3 fw-bold">📦 مخزون الخامات</h5>
+  <div class="card">
+    <div class="card-body p-0"><div id="ri-table" class="table-responsive"></div></div>
   </div>
 </div>
 
-<!-- Raw Dispatch -->
+<!-- RAW DISPATCH -->
 <div id="rawDispatch" class="section">
-  <h4 class="fw-bold mb-3">📤 صرف مواد خام / Raw Material Dispatch</h4>
-  <div class="card p-3 mb-3">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <label class="form-label fw-bold">اسم المادة / Material <span class="text-danger">*</span></label>
-        <input id="rd-mat" class="form-control" list="rawMatList" placeholder="اختر أو اكتب..."/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الكمية / Qty <span class="text-danger">*</span></label>
-        <input id="rd-qty" type="number" class="form-control" placeholder="0"/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الوحدة / Unit</label>
-        <select id="rd-unit" class="form-select">
-          <option>kg</option><option>g</option><option>L</option><option>mL</option><option>bag</option><option>drum</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold">الغرض / Purpose</label>
-        <input id="rd-purpose" class="form-control" placeholder="الغرض من الصرف..."/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الصرف / Date</label>
-        <input id="rd-date" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label fw-bold">ملاحظات / Notes</label>
-        <input id="rd-notes" class="form-control" placeholder="ملاحظات..."/>
-      </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-warning w-100 fw-bold" onclick="addRD()">💾 حفظ / Save</button>
+  <h5 class="mb-3 fw-bold">📤 صرف الخامات</h5>
+  <div class="card mb-4">
+    <div class="card-header">إضافة صرف جديد</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4"><label class="form-label">اسم الخامة *</label>
+          <input id="rd-mat" class="form-control" list="rawMatList" placeholder="اختر أو اكتب"></div>
+        <div class="col-md-3"><label class="form-label">الكمية *</label>
+          <input id="rd-qty" class="form-control" type="number" step="0.001" placeholder="0"></div>
+        <div class="col-md-2"><label class="form-label">الوحدة</label>
+          <select id="rd-unit" class="form-select">
+            <option>kg</option><option>g</option><option>L</option><option>mL</option><option>piece</option>
+          </select></div>
+        <div class="col-md-3"><label class="form-label">الغرض</label>
+          <input id="rd-purpose" class="form-control" placeholder="إنتاج، فحص..."></div>
+        <div class="col-md-4"><label class="form-label">🔗 ربط بباتش منتج نهائي (FG)</label>
+          <input id="rd-fgbatch" class="form-control" placeholder="مثال: FG-00001 (اختياري)"></div>
+        <div class="col-md-4"><label class="form-label">تاريخ الصرف</label>
+          <input id="rd-date" class="form-control" type="date"></div>
+        <div class="col-md-8"><label class="form-label">ملاحظات</label>
+          <input id="rd-notes" class="form-control" placeholder="..."></div>
+        <div class="col-12">
+          <div class="alert alert-info py-2 small mb-0">
+            <strong>ملاحظة:</strong> سيتم إنشاء رقم باتش الصرف (DSP-XXXXX) تلقائياً ولن يتغير. حقل "ربط بباتش منتج نهائي" اختياري لأغراض التتبع.
+          </div>
+        </div>
+        <div class="col-12 text-end">
+          <button class="btn btn-warning" onclick="saveRD()">💾 حفظ الصرف</button></div>
       </div>
     </div>
   </div>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h6 class="fw-bold mb-0">سجلات الصرف / Dispatch Records</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadRD()">🔄 تحديث</button>
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      سجل الصرف
+      <input id="rd-search" class="form-control form-control-sm w-25" placeholder="بحث..." oninput="loadRD()">
     </div>
-    <div class="table-responsive"><table class="table table-hover table-sm">
-      <thead><tr><th>رقم الدفعة</th><th>المادة</th><th>الكمية</th><th>الغرض</th><th>التاريخ</th><th>بواسطة</th><th></th></tr></thead>
-      <tbody id="rdBody"></tbody>
-    </table></div>
+    <div class="card-body p-0"><div id="rd-table" class="table-responsive"></div></div>
   </div>
 </div>
 
-<!-- Pkg Receipt -->
+<!-- PKG RECEIPT -->
 <div id="pkgReceipt" class="section">
-  <h4 class="fw-bold mb-3">📥 استلام مواد تعبئة / Packaging Receipt</h4>
-  <div class="card p-3 mb-3">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <label class="form-label fw-bold">اسم المادة / Material <span class="text-danger">*</span></label>
-        <input id="pr-mat" class="form-control" list="pkgMatList" placeholder="اختر أو اكتب..."/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الكمية / Qty <span class="text-danger">*</span></label>
-        <input id="pr-qty" type="number" class="form-control" placeholder="0"/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الوحدة / Unit</label>
-        <select id="pr-unit" class="form-select">
-          <option>piece</option><option>box</option><option>roll</option><option>pack</option><option>carton</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold">المورد / Supplier</label>
-        <input id="pr-sup" class="form-control" placeholder="اسم المورد..."/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">رقم اللوت / Lot No</label>
-        <input id="pr-lot" class="form-control" placeholder="LOT-XXXX"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الانتهاء / Expiry</label>
-        <input id="pr-exp" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الاستلام / Date</label>
-        <input id="pr-date" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-primary w-100 fw-bold" onclick="addPR()">💾 حفظ / Save</button>
-      </div>
-      <div class="col-12">
-        <label class="form-label fw-bold">ملاحظات / Notes</label>
-        <input id="pr-notes" class="form-control" placeholder="ملاحظات اختيارية..."/>
+  <h5 class="mb-3 fw-bold">📥 استلام مواد التعبئة</h5>
+  <div class="card mb-4">
+    <div class="card-header">إضافة استلام جديد</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4"><label class="form-label">اسم مادة التعبئة *</label>
+          <input id="pr-mat" class="form-control" list="pkgMatList" placeholder="اختر أو اكتب"></div>
+        <div class="col-md-4"><label class="form-label">المورد</label>
+          <input id="pr-sup" class="form-control" placeholder="اسم المورد"></div>
+        <div class="col-md-4"><label class="form-label">باتش المورد / Supplier Batch</label>
+          <input id="pr-supbatch" class="form-control" placeholder="رقم الباتش عند المورد"></div>
+        <div class="col-md-3"><label class="form-label">الكمية *</label>
+          <input id="pr-qty" class="form-control" type="number" step="1" placeholder="0"></div>
+        <div class="col-md-2"><label class="form-label">الوحدة</label>
+          <select id="pr-unit" class="form-select">
+            <option>piece</option><option>box</option><option>roll</option><option>kg</option>
+          </select></div>
+        <div class="col-md-3"><label class="form-label">رقم اللوت</label>
+          <input id="pr-lot" class="form-control" placeholder="LOT-001"></div>
+        <div class="col-md-4"><label class="form-label">تاريخ الانتهاء</label>
+          <input id="pr-exp" class="form-control" type="date"></div>
+        <div class="col-md-4"><label class="form-label">تاريخ الاستلام</label>
+          <input id="pr-date" class="form-control" type="date"></div>
+        <div class="col-md-8"><label class="form-label">ملاحظات</label>
+          <input id="pr-notes" class="form-control" placeholder="..."></div>
+        <div class="col-12 text-end">
+          <button class="btn btn-success" onclick="savePR()">💾 حفظ الاستلام</button></div>
       </div>
     </div>
   </div>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h6 class="fw-bold mb-0">السجلات / Records</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadPR()">🔄 تحديث</button>
-    </div>
-    <div class="table-responsive"><table class="table table-hover table-sm">
-      <thead><tr><th>رقم الدفعة</th><th>المادة</th><th>الكمية</th><th>المورد</th><th>تاريخ الاستلام</th><th>بواسطة</th><th></th></tr></thead>
-      <tbody id="prBody"></tbody>
-    </table></div>
+  <div class="card">
+    <div class="card-header">سجل استلام التعبئة</div>
+    <div class="card-body p-0"><div id="pr-table" class="table-responsive"></div></div>
   </div>
 </div>
 
-<!-- Pkg Inventory -->
+<!-- PKG INVENTORY -->
 <div id="pkgInventory" class="section">
-  <h4 class="fw-bold mb-3">📦 مخزون مواد التعبئة / Packaging Inventory</h4>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between mb-2">
-      <h6 class="fw-bold mb-0">الرصيد الحالي / Current Balance</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadPI()">🔄 تحديث</button>
-    </div>
-    <div class="table-responsive"><table class="table table-hover table-sm">
-      <thead><tr><th>المادة / Material</th><th>الكمية الواردة</th><th>الكمية المصروفة</th><th>الرصيد</th><th>الوحدة</th><th>الحد الأدنى</th><th>الحالة</th></tr></thead>
-      <tbody id="piBody"></tbody>
-    </table></div>
+  <h5 class="mb-3 fw-bold">📦 مخزون التعبئة</h5>
+  <div class="card">
+    <div class="card-body p-0"><div id="pi-table" class="table-responsive"></div></div>
   </div>
 </div>
 
-<!-- Pkg Dispatch -->
+<!-- PKG DISPATCH -->
 <div id="pkgDispatch" class="section">
-  <h4 class="fw-bold mb-3">📤 صرف مواد تعبئة / Packaging Dispatch</h4>
-  <div class="card p-3 mb-3">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <label class="form-label fw-bold">اسم المادة / Material <span class="text-danger">*</span></label>
-        <input id="pd-mat" class="form-control" list="pkgMatList" placeholder="اختر أو اكتب..."/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الكمية / Qty <span class="text-danger">*</span></label>
-        <input id="pd-qty" type="number" class="form-control" placeholder="0"/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الوحدة / Unit</label>
-        <select id="pd-unit" class="form-select">
-          <option>piece</option><option>box</option><option>roll</option><option>pack</option><option>carton</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold">الغرض / Purpose</label>
-        <input id="pd-purpose" class="form-control" placeholder="الغرض من الصرف..."/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الصرف / Date</label>
-        <input id="pd-date" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label fw-bold">ملاحظات / Notes</label>
-        <input id="pd-notes" class="form-control" placeholder="ملاحظات..."/>
-      </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-warning w-100 fw-bold" onclick="addPD()">💾 حفظ / Save</button>
+  <h5 class="mb-3 fw-bold">📤 صرف مواد التعبئة</h5>
+  <div class="card mb-4">
+    <div class="card-header">إضافة صرف جديد</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4"><label class="form-label">اسم مادة التعبئة *</label>
+          <input id="pd-mat" class="form-control" list="pkgMatList" placeholder="اختر أو اكتب"></div>
+        <div class="col-md-3"><label class="form-label">الكمية *</label>
+          <input id="pd-qty" class="form-control" type="number" step="1" placeholder="0"></div>
+        <div class="col-md-2"><label class="form-label">الوحدة</label>
+          <select id="pd-unit" class="form-select">
+            <option>piece</option><option>box</option><option>roll</option><option>kg</option>
+          </select></div>
+        <div class="col-md-3"><label class="form-label">الغرض</label>
+          <input id="pd-purpose" class="form-control" placeholder="إنتاج..."></div>
+        <div class="col-md-4"><label class="form-label">🔗 ربط بباتش منتج نهائي (FG)</label>
+          <input id="pd-fgbatch" class="form-control" placeholder="مثال: FG-00001 (اختياري)"></div>
+        <div class="col-md-4"><label class="form-label">تاريخ الصرف</label>
+          <input id="pd-date" class="form-control" type="date"></div>
+        <div class="col-md-8"><label class="form-label">ملاحظات</label>
+          <input id="pd-notes" class="form-control" placeholder="..."></div>
+        <div class="col-12 text-end">
+          <button class="btn btn-warning" onclick="savePD()">💾 حفظ الصرف</button></div>
       </div>
     </div>
   </div>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h6 class="fw-bold mb-0">سجلات الصرف / Dispatch Records</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadPD()">🔄 تحديث</button>
-    </div>
-    <div class="table-responsive"><table class="table table-hover table-sm">
-      <thead><tr><th>رقم الدفعة</th><th>المادة</th><th>الكمية</th><th>الغرض</th><th>التاريخ</th><th>بواسطة</th><th></th></tr></thead>
-      <tbody id="pdBody"></tbody>
-    </table></div>
+  <div class="card">
+    <div class="card-header">سجل صرف التعبئة</div>
+    <div class="card-body p-0"><div id="pd-table" class="table-responsive"></div></div>
   </div>
 </div>
 
-<!-- Production -->
+<!-- PRODUCTION -->
 <div id="production" class="section">
-  <h4 class="fw-bold mb-3">🏭 سجلات الإنتاج / Production Records</h4>
-  <div class="card p-3 mb-3">
-    <div class="row g-2">
-      <div class="col-md-4">
-        <label class="form-label fw-bold">اسم المنتج / Product <span class="text-danger">*</span></label>
-        <input id="pp-prod" class="form-control" placeholder="اسم المنتج النهائي..."/>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold">العميل / Customer</label>
-        <input id="pp-customer" class="form-control" placeholder="مثال: شركة الأمل، مؤسسة النور"/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الكمية / Qty <span class="text-danger">*</span></label>
-        <input id="pp-qty" type="number" class="form-control" placeholder="0"/>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-bold">الوحدة / Unit</label>
-        <select id="pp-unit" class="form-select">
-          <option>kg</option><option>g</option><option>piece</option><option>box</option><option>carton</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الإنتاج / Production Date</label>
-        <input id="pp-date" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">تاريخ الانتهاء / Expiry Date</label>
-        <input id="pp-exp" type="date" class="form-control"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">ملاحظات / Notes</label>
-        <input id="pp-notes" class="form-control" placeholder="ملاحظات..."/>
-      </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button class="btn btn-success w-100 fw-bold" onclick="addPP()">💾 حفظ / Save</button>
+  <h5 class="mb-3 fw-bold">🏭 سجل الإنتاج</h5>
+  <div class="card mb-4">
+    <div class="card-header">إضافة دُفعة إنتاج جديدة</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-5"><label class="form-label">اسم المنتج *</label>
+          <input id="pp-prod" class="form-control" placeholder="اسم المنتج النهائي"></div>
+        <div class="col-md-3"><label class="form-label">الكمية المنتجة *</label>
+          <input id="pp-qty" class="form-control" type="number" step="0.001" placeholder="0"></div>
+        <div class="col-md-2"><label class="form-label">الوحدة</label>
+          <select id="pp-unit" class="form-select">
+            <option>kg</option><option>g</option><option>L</option><option>piece</option><option>box</option>
+          </select></div>
+        <div class="col-md-3"><label class="form-label">تاريخ الإنتاج</label>
+          <input id="pp-date" class="form-control" type="date"></div>
+        <div class="col-md-3"><label class="form-label">تاريخ الانتهاء</label>
+          <input id="pp-exp" class="form-control" type="date"></div>
+        <div class="col-md-6"><label class="form-label">ملاحظات</label>
+          <input id="pp-notes" class="form-control" placeholder="..."></div>
+        <div class="col-12 text-end">
+          <button class="btn btn-primary" onclick="savePP()">💾 حفظ دُفعة الإنتاج</button></div>
       </div>
     </div>
   </div>
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h6 class="fw-bold mb-0">سجلات الإنتاج / Records</h6>
-      <button class="btn btn-sm btn-outline-secondary" onclick="loadPP()">🔄 تحديث</button>
+  <div class="card">
+    <div class="card-header">سجل الإنتاج والتوزيع على العملاء</div>
+    <div class="card-body p-0"><div id="pp-table"></div></div>
+  </div>
+  <!-- Modal: Add Customer -->
+  <div class="modal fade" id="custModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h6 class="modal-title">➕ إضافة عميل للباتش</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="cust-batch-no">
+          <div class="mb-2"><label class="form-label">اسم العميل *</label>
+            <input id="cust-name" class="form-control" placeholder="اسم الشركة / المؤسسة"></div>
+          <div class="row g-2">
+            <div class="col-6"><label class="form-label">الكمية</label>
+              <input id="cust-qty" class="form-control" type="number" step="0.001" placeholder="0"></div>
+            <div class="col-6"><label class="form-label">الوحدة</label>
+              <select id="cust-unit" class="form-select">
+                <option>kg</option><option>g</option><option>L</option><option>piece</option><option>box</option>
+              </select></div>
+          </div>
+          <div class="mb-2 mt-2"><label class="form-label">تاريخ التسليم</label>
+            <input id="cust-date" class="form-control" type="date"></div>
+          <div class="mb-2"><label class="form-label">رقم الفاتورة</label>
+            <input id="cust-inv" class="form-control" placeholder="INV-001"></div>
+          <div class="mb-2"><label class="form-label">ملاحظات</label>
+            <input id="cust-notes" class="form-control" placeholder="..."></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+          <button class="btn btn-primary btn-sm" onclick="saveCust()">💾 حفظ</button>
+        </div>
+      </div>
     </div>
-    <div class="table-responsive"><table class="table table-hover table-sm">
-      <thead><tr><th>رقم الدفعة</th><th>المنتج</th><th>العميل</th><th>الكمية</th><th>تاريخ الإنتاج</th><th>تاريخ الانتهاء</th><th>بواسطة</th><th></th></tr></thead>
-      <tbody id="ppBody"></tbody>
-    </table></div>
   </div>
 </div>
 
-<!-- Trace -->
+<!-- REPORTS -->
+<div id="reports" class="section">
+  <h5 class="mb-3 fw-bold">📈 التقارير</h5>
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <select id="rep-type" class="form-select">
+            <option value="raw">تقرير الخامات</option>
+            <option value="pkg">تقرير التعبئة</option>
+            <option value="prod">تقرير الإنتاج</option>
+          </select>
+        </div>
+        <div class="col-md-auto">
+          <button class="btn btn-primary" onclick="loadReport()">📊 عرض</button>
+          <button class="btn btn-outline-secondary" onclick="printReport()">🖨️ طباعة</button>
+          <button class="btn btn-outline-success" onclick="exportCSV()">📥 CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="rep-table" class="card"><div class="card-body p-0"></div></div>
+</div>
+
+<!-- TRACE -->
 <div id="trace" class="section">
-  <h4 class="fw-bold mb-3">🔍 تتبع الدفعة / Batch Trace</h4>
-  <div class="card p-3 mb-3">
-    <div class="row g-2">
-      <div class="col-md-8">
-        <label class="form-label fw-bold">رقم الدفعة أو اسم المادة</label>
-        <input id="traceQ" class="form-control" placeholder="مثال: RM-00001 أو دقيق قمح..."/>
+  <h5 class="mb-3 fw-bold">🔍 التتبع</h5>
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">نوع التتبع</label>
+          <select id="trace-type" class="form-select" onchange="updateTracePlaceholder()">
+            <option value="forward">⬇️ تتبع أمامي (من الخامة إلى العميل)</option>
+            <option value="backward">⬆️ تتبع خلفي (من المنتج إلى الخامة)</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">كلمة البحث</label>
+          <input id="trace-q" class="form-control" placeholder="رقم باتش أو اسم مادة أو عميل..." onkeydown="if(event.key==='Enter')doTrace()">
+        </div>
+        <div class="col-md-auto">
+          <button class="btn btn-primary" onclick="doTrace()">🔍 تتبع</button>
+        </div>
       </div>
-      <div class="col-md-4 d-flex align-items-end">
-        <button class="btn btn-primary w-100 fw-bold" onclick="doTrace()">🔍 بحث / Search</button>
+      <div class="mt-2">
+        <small class="text-muted">
+          <strong>أمامي:</strong> ابحث برقم باتش الخامة (RM-00001) أو اسم الخامة أو باتش المورد ← يعرض الصرف والمنتج النهائي والعملاء<br>
+          <strong>خلفي:</strong> ابحث برقم باتش المنتج (FG-00001) أو اسم المنتج أو اسم العميل ← يعرض الخامات المستخدمة ومصادرها
+        </small>
       </div>
     </div>
   </div>
-  <div id="traceResults"></div>
+  <div id="trace-result"></div>
 </div>
 
-<!-- Materials Management -->
+<!-- MATERIALS -->
 <div id="materials" class="section">
-  <h4 class="fw-bold mb-3">⚙️ إدارة المواد / Materials Management</h4>
+  <h5 class="mb-3 fw-bold">⚙️ إدارة المواد</h5>
   <div class="row g-3">
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="fw-bold mb-2">المواد الخام / Raw Materials</h6>
-        <div class="row g-2 mb-2">
-          <div class="col-7"><input id="mat-name" class="form-control form-control-sm" placeholder="اسم المادة..."/></div>
-          <div class="col-3"><input id="mat-min" type="number" class="form-control form-control-sm" placeholder="الحد الأدنى"/></div>
-          <div class="col-2"><button class="btn btn-sm btn-primary w-100" onclick="addMat()">+</button></div>
+      <div class="card">
+        <div class="card-header">الخامات Raw Materials</div>
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-5"><input id="mat-name" class="form-control form-control-sm" placeholder="اسم الخامة"></div>
+            <div class="col-3"><select id="mat-unit" class="form-select form-select-sm"><option>kg</option><option>g</option><option>L</option><option>mL</option><option>piece</option></select></div>
+            <div class="col-2"><input id="mat-min" class="form-control form-control-sm" type="number" placeholder="حد أدنى"></div>
+            <div class="col-2"><button class="btn btn-sm btn-success w-100" onclick="saveMat()">+</button></div>
+          </div>
+          <div id="mat-list"></div>
         </div>
-        <div id="matList" style="max-height:300px;overflow-y:auto"></div>
       </div>
     </div>
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="fw-bold mb-2">مواد التعبئة / Packaging Materials</h6>
-        <div class="row g-2 mb-2">
-          <div class="col-7"><input id="pmat-name" class="form-control form-control-sm" placeholder="اسم المادة..."/></div>
-          <div class="col-3"><input id="pmat-min" type="number" class="form-control form-control-sm" placeholder="الحد الأدنى"/></div>
-          <div class="col-2"><button class="btn btn-sm btn-primary w-100" onclick="addPMat()">+</button></div>
+      <div class="card">
+        <div class="card-header">مواد التعبئة Packaging</div>
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-5"><input id="pmat-name" class="form-control form-control-sm" placeholder="اسم مادة التعبئة"></div>
+            <div class="col-3"><select id="pmat-unit" class="form-select form-select-sm"><option>piece</option><option>box</option><option>roll</option><option>kg</option></select></div>
+            <div class="col-2"><input id="pmat-min" class="form-control form-control-sm" type="number" placeholder="حد أدنى"></div>
+            <div class="col-2"><button class="btn btn-sm btn-success w-100" onclick="savePMat()">+</button></div>
+          </div>
+          <div id="pmat-list"></div>
         </div>
-        <div id="pmatList" style="max-height:300px;overflow-y:auto"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Reports -->
-<div id="reports" class="section">
-  <h4 class="fw-bold mb-3">📋 التقارير / Reports</h4>
-  <div class="card p-3 mb-3">
-    <div class="d-flex gap-2 flex-wrap">
-      <button class="btn btn-outline-primary" onclick="loadReport('raw')">📦 تقرير المواد الخام</button>
-      <button class="btn btn-outline-success" onclick="loadReport('pkg')">📦 تقرير مواد التعبئة</button>
-      <button class="btn btn-outline-info" onclick="loadReport('prod')">🏭 تقرير الإنتاج</button>
-      <button class="btn btn-outline-secondary ms-auto" onclick="printReport()">🖨️ طباعة</button>
-      <button class="btn btn-outline-dark" onclick="exportCSV()">📊 تصدير CSV</button>
+<!-- MANUAL -->
+<div id="manual" class="section">
+  <h5 class="mb-3 fw-bold">📖 دليل المستخدم</h5>
+  <div class="card">
+    <div class="card-body" style="line-height:2">
+      <h6 class="text-primary">🔄 سير العمل الأساسي</h6>
+      <ol>
+        <li><strong>استلام الخامات</strong>: أدخل اسم الخامة + المورد + <strong>باتش المورد</strong> + الكمية. سيُنشأ رقم RM-XXXXX تلقائياً.</li>
+        <li><strong>مخزون الخامات</strong>: يعرض الرصيد الحالي = إجمالي الاستلام - إجمالي الصرف.</li>
+        <li><strong>صرف الخامات</strong>: أدخل الكمية المصروفة + <strong>باتش المنتج النهائي (FG-XXXXX)</strong> لربط الصرف بالإنتاج. رقم الصرف DSP-XXXXX يُنشأ تلقائياً.</li>
+        <li><strong>الإنتاج</strong>: أنشئ دُفعة إنتاج (FG-XXXXX). ثم أضف عملاء لكل باتش بالضغط على "عملاء" مع الكميات وأرقام الفواتير.</li>
+        <li><strong>التتبع الأمامي</strong>: ابحث بـ RM-XXXXX أو اسم الخامة ← يعرض الصرف والمنتج والعملاء.</li>
+        <li><strong>التتبع الخلفي</strong>: ابحث بـ FG-XXXXX أو اسم المنتج أو اسم العميل ← يعرض الخامات المستخدمة.</li>
+      </ol>
+      <h6 class="text-primary mt-3">📋 أرقام الباتشات</h6>
+      <ul>
+        <li><code>RM-XXXXX</code> — استلام الخامات</li>
+        <li><code>DSP-XXXXX</code> — صرف الخامات</li>
+        <li><code>PKG-XXXXX</code> — استلام التعبئة</li>
+        <li><code>PKGD-XXXXX</code> — صرف التعبئة</li>
+        <li><code>FG-XXXXX</code> — المنتج النهائي (Finished Goods)</li>
+      </ul>
+      <h6 class="text-primary mt-3">⚠️ تنبيهات الصلاحية</h6>
+      <p>لوحة التحكم تعرض تلقائياً كل المواد والمنتجات التي ستنتهي صلاحيتها خلال 30 يوم.</p>
     </div>
   </div>
-  <div id="reportArea" class="card p-3">
-    <p class="text-muted text-center">اختر نوع التقرير لعرضه / Select a report type above</p>
-  </div>
 </div>
 
-<!-- Manual -->
-<div id="manual" class="section">
-  <h4 class="fw-bold mb-3">📖 دليل المستخدم / User Manual</h4>
-  <div class="card p-4" style="max-width:800px">
-    <h5 class="fw-bold text-primary">Batch Tracker Pro v2 – دليل الاستخدام</h5>
-    <hr/>
-    <h6 class="fw-bold">🔐 تسجيل الدخول</h6>
-    <p>استخدم اسم المستخدم <code>admin</code> وكلمة المرور <code>admin</code> للدخول الأول.</p>
-    <h6 class="fw-bold mt-3">📥 استلام المواد الخام</h6>
-    <p>اذهب إلى <b>استلام خام</b>، أدخل اسم المادة (من القائمة أو اكتب يدوياً)، الكمية، المورد، ورقم اللوت. سيتم توليد رقم دفعة تلقائياً بصيغة <code>RM-XXXXX</code>.</p>
-    <h6 class="fw-bold mt-3">📤 صرف المواد الخام</h6>
-    <p>اذهب إلى <b>صرف خام</b>، أدخل المادة والكمية والغرض. رقم الدفعة سيكون بصيغة <code>DSP-XXXXX</code>.</p>
-    <h6 class="fw-bold mt-3">📦 مخزون المواد الخام</h6>
-    <p>يعرض الرصيد الحالي لكل مادة (الوارد - المصروف). الحالة تظهر <span class="text-danger">⚠️ منخفض</span> عند الوصول للحد الأدنى.</p>
-    <h6 class="fw-bold mt-3">📥 استلام مواد التعبئة</h6>
-    <p>نفس آلية المواد الخام لكن لمواد التعبئة. رقم الدفعة بصيغة <code>PKG-XXXXX</code>.</p>
-    <h6 class="fw-bold mt-3">📤 صرف مواد التعبئة</h6>
-    <p>رقم الدفعة بصيغة <code>PKGD-XXXXX</code>.</p>
-    <h6 class="fw-bold mt-3">🏭 سجلات الإنتاج</h6>
-    <p>أدخل اسم المنتج النهائي، العميل (شركة أو أفراد)، الكمية، وتواريخ الإنتاج والانتهاء. رقم الدفعة بصيغة <code>FG-XXXXX</code>.</p>
-    <h6 class="fw-bold mt-3">🔍 تتبع الدفعة</h6>
-    <p>ابحث برقم الدفعة أو اسم المادة لرؤية جميع السجلات المرتبطة بها.</p>
-    <h6 class="fw-bold mt-3">⚙️ إدارة المواد</h6>
-    <p>أضف مواد جديدة لقائمة المواد الخام ومواد التعبئة، وحدد الحد الأدنى للتنبيه عند انخفاض المخزون.</p>
-    <h6 class="fw-bold mt-3">📋 التقارير</h6>
-    <p>اعرض ملخص المواد الخام، التعبئة، أو الإنتاج. يمكن طباعتها أو تصديرها كـ CSV.</p>
-    <hr/>
-    <h6 class="fw-bold">أرقام الدفعات / Batch Number Format</h6>
-    <ul>
-      <li><code>RM-XXXXX</code> – استلام مواد خام / Raw Material Receipt</li>
-      <li><code>DSP-XXXXX</code> – صرف مواد خام / Raw Material Dispatch</li>
-      <li><code>PKG-XXXXX</code> – استلام مواد تعبئة / Packaging Receipt</li>
-      <li><code>PKGD-XXXXX</code> – صرف مواد تعبئة / Packaging Dispatch</li>
-      <li><code>FG-XXXXX</code> – إنتاج / Finished Goods Production</li>
-    </ul>
-  </div>
-</div>
+</div><!-- /main-content -->
+</div><!-- /appSection -->
 
-</div><!-- /main -->
+<!-- Datalists -->
+<datalist id="rawMatList">
+  <option>سكر</option><option>ملح</option><option>دقيق قمح</option><option>نشا ذرة</option>
+  <option>بروتين حليب</option><option>دهن نباتي مهدرج</option><option>زيت نخيل</option>
+  <option>زيت دوار الشمس</option><option>زيت ذرة</option><option>حمض الستريك</option>
+  <option>حمض الأسكوربيك</option><option>حمض الطرطريك</option><option>بيكربونات الصوديوم</option>
+  <option>كلوريد الكالسيوم</option><option>بيكربونات الأمونيوم</option><option>نترات الصوديوم</option>
+  <option>نترات البوتاسيوم</option><option>غلوكوز</option><option>فركتوز</option>
+  <option>مالتوديكسترين</option><option>جيلاتين</option><option>بكتين</option>
+  <option>كاراجينان</option><option>غوار غم</option><option>زانثان غم</option><option>لسيثين</option>
+</datalist>
+<datalist id="pkgMatList">
+  <option>علب كرتون صغير</option><option>علب كرتون متوسط</option><option>علب كرتون كبير</option>
+  <option>أكياس بولي إيثيلين</option><option>أكياس PP</option><option>أكياس متعددة الطبقات</option>
+  <option>رول تغليف شفاف</option><option>رول تغليف ألومنيوم</option><option>ملصقات صغيرة</option>
+  <option>ملصقات كبيرة</option><option>قوارير زجاجية</option><option>قوارير بلاستيكية</option>
+  <option>أغطية معدنية</option><option>أغطية بلاستيكية</option><option>صواني ألومنيوم</option>
+  <option>صواني بلاستيك</option><option>أكواب ورقية</option><option>أكواب بلاستيك</option>
+  <option>شرائط لاصقة</option><option>حلقات تأمين</option><option>فلل داخلية</option>
+  <option>كبسولات جيلاتين</option><option>أنابيب بلاستيك</option><option>عبوات معدنية</option>
+  <option>دلو بلاستيك 1L</option><option>دلو بلاستيك 5L</option><option>دلو بلاستيك 10L</option>
+  <option>جرة زجاج 200ml</option><option>جرة زجاج 500ml</option><option>جرة زجاج 1L</option>
+  <option>زجاجة PET 250ml</option><option>زجاجة PET 500ml</option><option>زجاجة PET 1L</option>
+  <option>علبة صفيح 250g</option><option>علبة صفيح 500g</option><option>علبة صفيح 1kg</option>
+  <option>كيس ستاند أب 100g</option><option>كيس ستاند أب 250g</option><option>كيس ستاند أب 500g</option>
+  <option>كيس دوي باك 1kg</option><option>صندوق مقوى بني</option><option>صندوق مقوى أبيض</option>
+  <option>فوم حماية</option><option>بلاستيك فقاعي</option><option>شريط تغليف شفاف</option>
+  <option>شريط تغليف بني</option><option>حزام تثبيت</option><option>باليت خشبي</option>
+  <option>باليت بلاستيك</option><option>شبكة تغليف</option><option>حقيبة قماش</option>
+  <option>كيس كرافت ورقي</option><option>كيس ألومنيوم فويل</option><option>كيس مبطن بألومنيوم</option>
+  <option>علبة هدايا</option><option>ورق تغليف هدايا</option><option>ربطة قماش</option>
+  <option>منديل ورقي</option><option>قفازات بلاستيك</option><option>أكياس مجمدة</option>
+  <option>حاوية عازلة للحرارة</option><option>ثلج جاف</option><option>جيل تبريد</option>
+  <option>ملاعق بلاستيك</option><option>أعواد خشبية</option><option>مغارف بلاستيك</option>
+  <option>غطاء رش</option><option>موزع ضخ</option><option>نقاط ختم</option>
+  <option>شمع تغليف</option><option>لاكيه تغليف</option><option>حبر طباعة</option>
+  <option>ألومنيوم فويل 10mic</option><option>ألومنيوم فويل 20mic</option>
+  <option>بولي إيثيلين 30mic</option><option>بولي إيثيلين 60mic</option>
+</datalist>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-let currentSection = 'dashboard';
-let currentReport = null;
-let reportData = [];
+let currentUser = null;
+const custModal = new bootstrap.Modal(document.getElementById('custModal'));
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────────────────
 async function doLogin() {
-  const u = document.getElementById('loginUser').value;
-  const p = document.getElementById('loginPass').value;
-  const err = document.getElementById('loginErr');
-  err.classList.add('d-none');
-  try {
-    const r = await api('/api/login', 'POST', {username:u, password:p});
-    if (r.ok) {
-      document.getElementById('loginScreen').style.display='none';
-      document.getElementById('sidebarUser').textContent = '👤 ' + r.username;
-      initSSE();
-      showSection('dashboard');
-    }
-  } catch(e) {
-    err.textContent = 'بيانات الدخول غير صحيحة'; err.classList.remove('d-none');
+  const r = await api('POST','/api/login',{username:document.getElementById('li-user').value,password:document.getElementById('li-pass').value});
+  if(r.ok){
+    currentUser=r.username;
+    document.getElementById('loginSection').style.display='none';
+    document.getElementById('appSection').classList.remove('d-none');
+    document.getElementById('navUser').textContent=currentUser;
+    initSSE(); loadDashboard(); loadMaterials();
+    const td=document.getElementById('rr-date');if(td)td.value=today();
+    const trd=document.getElementById('rd-date');if(trd)trd.value=today();
+  } else {
+    document.getElementById('li-err').classList.remove('d-none');
   }
 }
 
 async function doLogout() {
-  await api('/api/logout','POST',{});
+  await api('POST','/api/logout');
   location.reload();
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  document.getElementById('loginPass').addEventListener('keydown', e => {
-    if (e.key==='Enter') doLogin();
-  });
-  const today = new Date().toISOString().split('T')[0];
-  ['rr-date','rd-date','pr-date','pd-date','pp-date'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = today;
-  });
-  // Check session
-  const me = await api('/api/me','GET');
-  if (me && me.username) {
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('sidebarUser').textContent = '👤 ' + me.username;
-    initSSE();
-    showSection('dashboard');
-  }
-});
-
+// ── SSE ───────────────────────────────────────────────────────────────────────
 function initSSE() {
   const es = new EventSource('/api/events');
-  es.addEventListener('update', e => {
-    const d = JSON.parse(e.data);
-    const refreshMap = {
-      receipts: ()=>{ if(currentSection==='rawReceipt') loadRR(); if(currentSection==='rawInventory') loadRI(); },
-      dispatches: ()=>{ if(currentSection==='rawDispatch') loadRD(); if(currentSection==='rawInventory') loadRI(); },
-      pkg_receipts: ()=>{ if(currentSection==='pkgReceipt') loadPR(); if(currentSection==='pkgInventory') loadPI(); },
-      pkg_dispatches: ()=>{ if(currentSection==='pkgDispatch') loadPD(); if(currentSection==='pkgInventory') loadPI(); },
-      production: ()=>{ if(currentSection==='production') loadPP(); },
-    };
-    if (refreshMap[d.type]) refreshMap[d.type]();
-    if (currentSection==='dashboard') loadDashboard();
-  });
-  es.onerror = () => setTimeout(initSSE, 5000);
+  es.addEventListener('receipts_update', ()=>{ if(document.getElementById('rawReceipt').classList.contains('active')) loadRR(); });
+  es.addEventListener('dispatches_update', ()=>{ if(document.getElementById('rawDispatch').classList.contains('active')) loadRD(); });
+  es.addEventListener('pkg_receipts_update', ()=>{ if(document.getElementById('pkgReceipt').classList.contains('active')) loadPR(); });
+  es.addEventListener('pkg_dispatches_update', ()=>{ if(document.getElementById('pkgDispatch').classList.contains('active')) loadPD(); });
+  es.addEventListener('production_update', ()=>{ if(document.getElementById('production').classList.contains('active')) loadPP(); });
+  es.addEventListener('materials_update', ()=>loadMaterials());
+  es.onerror = ()=>setTimeout(initSSE,5000);
 }
 
-// ── Navigation ────────────────────────────────────────────────────────────────
-function showSection(name) {
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-  const el = document.getElementById(name);
-  if(el) el.classList.add('active');
-  currentSection = name;
-  document.querySelectorAll('.nav-link').forEach(l=>{
-    if(l.getAttribute('onclick') && l.getAttribute('onclick').includes(`'${name}'`))
-      l.classList.add('active');
-  });
-  const loaders = {
-    dashboard: loadDashboard,
-    rawReceipt: loadRR,
-    rawInventory: loadRI,
-    rawDispatch: loadRD,
-    pkgReceipt: loadPR,
-    pkgInventory: loadPI,
-    pkgDispatch: loadPD,
-    production: loadPP,
-    materials: loadMaterials,
-  };
-  if (loaders[name]) loaders[name]();
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function today(){return new Date().toISOString().split('T')[0]}
+function v(id){return document.getElementById(id)?.value?.trim()||''}
+function s(id,val){const el=document.getElementById(id);if(el)el.value=val;}
+
+async function api(method, url, body) {
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  try{return await r.json();}catch{return {};}
 }
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.sidebar .nav-link').forEach(a=>a.classList.remove('active'));
+  const loads={dashboard:loadDashboard,rawReceipt:loadRR,rawInventory:loadRI,rawDispatch:loadRD,
+    pkgReceipt:loadPR,pkgInventory:loadPI,pkgDispatch:loadPD,production:loadPP,
+    reports:()=>{},trace:()=>{},materials:loadMaterials};
+  if(loads[id]) loads[id]();
+}
+
+function fmt(n){return n===null||n===undefined?'-':parseFloat(n).toLocaleString('ar-SA',{maximumFractionDigits:3});}
+function badge(txt,cls='primary'){return `<span class="badge bg-${cls}">${txt||'-'}</span>`;}
+function batchBadge(b){return b?`<span class="badge-batch">${b}</span>`:'-';}
+function supBadge(b){return b?`<span class="badge-supplier">🏷️${b}</span>`:'';}
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 async function loadDashboard() {
-  const d = await api('/api/dashboard','GET');
-  document.getElementById('s-rmr').textContent  = d.rm_receipts||0;
-  document.getElementById('s-rmd').textContent  = d.rm_dispatches||0;
-  document.getElementById('s-pkgr').textContent = d.pkg_receipts||0;
-  document.getElementById('s-prod').textContent = d.production||0;
-  const alerts = document.getElementById('lowAlerts');
-  let html='';
-  if ((d.low_rm||[]).length)
-    html+=d.low_rm.map(r=>`<div class="alert-low mb-2">⚠️ مخزون منخفض (خام): <b>${r.name}</b> – الرصيد: ${r.bal} / الحد الأدنى: ${r.min_level}</div>`).join('');
-  if ((d.low_pkg||[]).length)
-    html+=d.low_pkg.map(r=>`<div class="alert-low mb-2">⚠️ مخزون منخفض (تعبئة): <b>${r.name}</b> – الرصيد: ${r.bal} / الحد الأدنى: ${r.min_level}</div>`).join('');
-  alerts.innerHTML = html;
+  const d = await api('GET','/api/dashboard');
+  const colors=['primary','warning','success','info','secondary'];
+  const labels=['استلام الخامات','صرف الخامات','استلام التعبئة','صرف التعبئة','الإنتاج'];
+  const vals=[d.rm_receipts,d.rm_dispatches,d.pkg_receipts,d.pkg_dispatches,d.production];
+  document.getElementById('db-stats').innerHTML=vals.map((v,i)=>
+    `<div class="col"><div class="stat-card bg-${colors[i]}">
+      <div class="fs-2 fw-bold">${v}</div>
+      <div class="small">${labels[i]}</div></div></div>`).join('');
+
+  // Low stock
+  const rmDiv=document.getElementById('db-low-rm');
+  const pkgDiv=document.getElementById('db-low-pkg');
+  rmDiv.innerHTML=`<div class="card"><div class="card-header text-danger">⚠️ خامات تحت الحد الأدنى</div><div class="card-body p-2">
+    ${d.low_rm?.length?d.low_rm.map(r=>`<div class="alert-expiry">📦 ${r.name} — رصيد: <strong>${fmt(r.bal)}</strong> (أدنى: ${r.min_level})</div>`).join('')
+    :'<div class="text-success small p-2">✅ جميع الخامات ضمن الحد الأدنى</div>'}</div></div>`;
+  pkgDiv.innerHTML=`<div class="card"><div class="card-header text-danger">⚠️ تعبئة تحت الحد الأدنى</div><div class="card-body p-2">
+    ${d.low_pkg?.length?d.low_pkg.map(r=>`<div class="alert-expiry">📦 ${r.name} — رصيد: <strong>${fmt(r.bal)}</strong> (أدنى: ${r.min_level})</div>`).join('')
+    :'<div class="text-success small p-2">✅ جميع مواد التعبئة ضمن الحد الأدنى</div>'}</div></div>`;
+
+  // Expiry alerts
+  const expDiv=document.getElementById('db-expiry');
+  const all=[...(d.expiry_rm||[]),...(d.expiry_fg||[])];
+  expDiv.innerHTML=all.length?`<div class="card"><div class="card-header text-warning">⏰ تنبيهات الصلاحية (خلال 30 يوم)</div><div class="card-body p-2">
+    ${all.map(e=>`<div class="alert-expiry">📅 <strong>${e.batch_no}</strong> — ${e.name} — ينتهي: <strong class="text-danger">${e.expiry_date}</strong> (${e.type} ${fmt(e.qty)} ${e.unit})</div>`).join('')}
+    </div></div>`:
+    `<div class="card"><div class="card-body text-success small p-2">✅ لا توجد مواد أو منتجات ستنتهي صلاحيتها خلال 30 يوم</div></div>`;
 }
 
-// ── Raw Receipts ──────────────────────────────────────────────────────────────
+// ── Raw Receipt ───────────────────────────────────────────────────────────────
+async function saveRR() {
+  if(!v('rr-mat')||!v('rr-qty')){alert('أدخل اسم الخامة والكمية');return;}
+  const r=await api('POST','/api/receipts',{
+    material_name:v('rr-mat'),supplier:v('rr-sup'),supplier_batch:v('rr-supbatch'),
+    qty:parseFloat(v('rr-qty')),unit:v('rr-unit'),lot_no:v('rr-lot'),
+    expiry_date:v('rr-exp'),received_date:v('rr-date')||today(),notes:v('rr-notes')
+  });
+  if(r.batch_no){
+    alert(`✅ تم الحفظ\nرقم الباتش: ${r.batch_no}`);
+    ['rr-mat','rr-sup','rr-supbatch','rr-qty','rr-lot','rr-exp','rr-notes'].forEach(id=>s(id,''));
+    s('rr-date',today()); loadRR();
+  }
+}
+
 async function loadRR() {
-  const rows = await api('/api/receipts','GET');
-  document.getElementById('rrBody').innerHTML = rows.map(r=>`
-    <tr><td><code>${r.batch_no}</code></td><td>${r.material_name}</td>
-    <td>${r.qty} ${r.unit}</td><td>${r.supplier||'-'}</td>
-    <td>${r.received_date||r.created_at?.split('T')[0]}</td>
-    <td>${r.created_by||'-'}</td>
-    <td><button class="btn-del" onclick="del('receipts',${r.id})">🗑️</button></td></tr>`).join('');
+  const rows=await api('GET','/api/receipts');
+  const q=v('rr-search').toLowerCase();
+  const filt=q?rows.filter(r=>(r.material_name+r.batch_no+r.supplier+r.supplier_batch).toLowerCase().includes(q)):rows;
+  document.getElementById('rr-table').innerHTML=`<table class="table table-hover table-sm mb-0">
+    <thead><tr><th>باتش النظام</th><th>باتش المورد</th><th>الخامة</th><th>المورد</th><th>الكمية</th><th>اللوت</th><th>الانتهاء</th><th>التاريخ</th><th></th></tr></thead>
+    <tbody>${filt.map(r=>`<tr>
+      <td>${batchBadge(r.batch_no)}</td>
+      <td>${supBadge(r.supplier_batch)}</td>
+      <td>${r.material_name}</td>
+      <td>${r.supplier||'-'}</td>
+      <td><strong>${fmt(r.qty)}</strong> ${r.unit}</td>
+      <td>${r.lot_no||'-'}</td>
+      <td class="${r.expiry_date?'text-danger fw-bold':''}">${r.expiry_date||'-'}</td>
+      <td>${r.received_date||'-'}</td>
+      <td><button class="btn btn-xs btn-outline-danger" onclick="del('receipts',${r.id},loadRR)">🗑</button></td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
-async function addRR() {
-  const mat=v('rr-mat'), qty=v('rr-qty');
-  if(!mat||!qty) return alert('أدخل اسم المادة والكمية');
-  await api('/api/receipts','POST',{
-    material_name:mat, qty:parseFloat(qty), unit:v('rr-unit'),
-    supplier:v('rr-sup'), lot_no:v('rr-lot'), expiry_date:v('rr-exp'),
-    received_date:v('rr-date'), notes:v('rr-notes')
-  });
-  ['rr-mat','rr-qty','rr-sup','rr-lot','rr-exp','rr-notes'].forEach(clearV);
-  loadRR();
-}
-
-// ── Raw Inventory ─────────────────────────────────────────────────────────────
+// ── Raw Inventory ──────────────────────────────────────────────────────────────
 async function loadRI() {
-  const rows = await api('/api/inventory','GET');
-  document.getElementById('riBody').innerHTML = rows.map(r=>{
-    const low = r.balance < r.min_level && r.min_level>0;
-    return `<tr class="${low?'table-warning':''}">
-      <td>${r.material_name}</td><td>${r.total_in}</td><td>${r.total_out}</td>
-      <td><b>${r.balance}</b></td><td>${r.unit}</td><td>${r.min_level||'-'}</td>
-      <td>${low?'<span class="badge-low">⚠️ منخفض</span>':'<span style="color:#16a34a">✅ طبيعي</span>'}</td></tr>`;
-  }).join('');
+  const rows=await api('GET','/api/inventory');
+  document.getElementById('ri-table').innerHTML=`<table class="table table-hover table-sm mb-0">
+    <thead><tr><th>الخامة</th><th>إجمالي الاستلام</th><th>إجمالي الصرف</th><th>الرصيد</th><th>الحد الأدنى</th><th>الحالة</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const low=r.min_level>0&&r.balance<r.min_level;
+      const cls=r.balance<=0?'out-stock':low?'low-stock':'';
+      return `<tr class="${cls}">
+        <td><strong>${r.material_name}</strong></td>
+        <td>${fmt(r.total_in)} ${r.unit}</td>
+        <td>${fmt(r.total_out)} ${r.unit}</td>
+        <td><strong class="${r.balance<=0?'text-danger':low?'text-warning':'text-success'}">${fmt(r.balance)} ${r.unit}</strong></td>
+        <td>${r.min_level>0?r.min_level+' '+r.unit:'-'}</td>
+        <td>${r.balance<=0?badge('نفذ','danger'):low?badge('منخفض','warning'):badge('متوفر','success')}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
 }
 
-// ── Raw Dispatches ────────────────────────────────────────────────────────────
+// ── Raw Dispatch ──────────────────────────────────────────────────────────────
+async function saveRD() {
+  if(!v('rd-mat')||!v('rd-qty')){alert('أدخل اسم الخامة والكمية');return;}
+  const r=await api('POST','/api/dispatches',{
+    material_name:v('rd-mat'),qty:parseFloat(v('rd-qty')),unit:v('rd-unit'),
+    purpose:v('rd-purpose'),fg_batch:v('rd-fgbatch'),
+    dispatch_date:v('rd-date')||today(),notes:v('rd-notes')
+  });
+  if(r.batch_no){
+    alert(`✅ تم الحفظ\nرقم باتش الصرف: ${r.batch_no}`);
+    ['rd-mat','rd-qty','rd-purpose','rd-fgbatch','rd-notes'].forEach(id=>s(id,''));
+    s('rd-date',today()); loadRD();
+  }
+}
+
 async function loadRD() {
-  const rows = await api('/api/dispatches','GET');
-  document.getElementById('rdBody').innerHTML = rows.map(r=>`
-    <tr><td><code>${r.batch_no}</code></td><td>${r.material_name}</td>
-    <td>${r.qty} ${r.unit}</td><td>${r.purpose||'-'}</td>
-    <td>${r.dispatch_date||r.created_at?.split('T')[0]}</td>
-    <td>${r.created_by||'-'}</td>
-    <td><button class="btn-del" onclick="del('dispatches',${r.id})">🗑️</button></td></tr>`).join('');
+  const rows=await api('GET','/api/dispatches');
+  const q=v('rd-search').toLowerCase();
+  const filt=q?rows.filter(r=>(r.material_name+r.batch_no+(r.fg_batch||'')).toLowerCase().includes(q)):rows;
+  document.getElementById('rd-table').innerHTML=`<table class="table table-hover table-sm mb-0">
+    <thead><tr><th>باتش الصرف</th><th>الخامة</th><th>الكمية</th><th>الغرض</th><th>ربط بـ (FG)</th><th>التاريخ</th><th></th></tr></thead>
+    <tbody>${filt.map(r=>`<tr>
+      <td>${batchBadge(r.batch_no)}</td>
+      <td>${r.material_name}</td>
+      <td><strong>${fmt(r.qty)}</strong> ${r.unit}</td>
+      <td>${r.purpose||'-'}</td>
+      <td>${r.fg_batch?`<span class="badge bg-info text-dark">${r.fg_batch}</span>`:'-'}</td>
+      <td>${r.dispatch_date||'-'}</td>
+      <td><button class="btn btn-xs btn-outline-danger" onclick="del('dispatches',${r.id},loadRD)">🗑</button></td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
-async function addRD() {
-  const mat=v('rd-mat'), qty=v('rd-qty');
-  if(!mat||!qty) return alert('أدخل اسم المادة والكمية');
-  await api('/api/dispatches','POST',{
-    material_name:mat, qty:parseFloat(qty), unit:v('rd-unit'),
-    purpose:v('rd-purpose'), dispatch_date:v('rd-date'), notes:v('rd-notes')
+// ── Pkg Receipt ───────────────────────────────────────────────────────────────
+async function savePR() {
+  if(!v('pr-mat')||!v('pr-qty')){alert('أدخل اسم المادة والكمية');return;}
+  const r=await api('POST','/api/pkg_receipts',{
+    material_name:v('pr-mat'),supplier:v('pr-sup'),supplier_batch:v('pr-supbatch'),
+    qty:parseFloat(v('pr-qty')),unit:v('pr-unit'),lot_no:v('pr-lot'),
+    expiry_date:v('pr-exp'),received_date:v('pr-date')||today(),notes:v('pr-notes')
   });
-  ['rd-mat','rd-qty','rd-purpose','rd-notes'].forEach(clearV);
-  loadRD();
+  if(r.batch_no){
+    alert(`✅ تم الحفظ\nرقم الباتش: ${r.batch_no}`);
+    ['pr-mat','pr-sup','pr-supbatch','pr-qty','pr-lot','pr-exp','pr-notes'].forEach(id=>s(id,''));
+    s('pr-date',today()); loadPR();
+  }
 }
 
-// ── Pkg Receipts ──────────────────────────────────────────────────────────────
 async function loadPR() {
-  const rows = await api('/api/pkg_receipts','GET');
-  document.getElementById('prBody').innerHTML = rows.map(r=>`
-    <tr><td><code>${r.batch_no}</code></td><td>${r.material_name}</td>
-    <td>${r.qty} ${r.unit}</td><td>${r.supplier||'-'}</td>
-    <td>${r.received_date||r.created_at?.split('T')[0]}</td>
-    <td>${r.created_by||'-'}</td>
-    <td><button class="btn-del" onclick="del('pkg_receipts',${r.id})">🗑️</button></td></tr>`).join('');
+  const rows=await api('GET','/api/pkg_receipts');
+  document.getElementById('pr-table').innerHTML=`<table class="table table-hover table-sm mb-0">
+    <thead><tr><th>باتش النظام</th><th>باتش المورد</th><th>المادة</th><th>المورد</th><th>الكمية</th><th>الانتهاء</th><th>التاريخ</th><th></th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td>${batchBadge(r.batch_no)}</td>
+      <td>${supBadge(r.supplier_batch)}</td>
+      <td>${r.material_name}</td>
+      <td>${r.supplier||'-'}</td>
+      <td><strong>${fmt(r.qty)}</strong> ${r.unit}</td>
+      <td class="${r.expiry_date?'text-danger fw-bold':''}">${r.expiry_date||'-'}</td>
+      <td>${r.received_date||'-'}</td>
+      <td><button class="btn btn-xs btn-outline-danger" onclick="del('pkg_receipts',${r.id},loadPR)">🗑</button></td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
-async function addPR() {
-  const mat=v('pr-mat'), qty=v('pr-qty');
-  if(!mat||!qty) return alert('أدخل اسم المادة والكمية');
-  await api('/api/pkg_receipts','POST',{
-    material_name:mat, qty:parseFloat(qty), unit:v('pr-unit'),
-    supplier:v('pr-sup'), lot_no:v('pr-lot'), expiry_date:v('pr-exp'),
-    received_date:v('pr-date'), notes:v('pr-notes')
-  });
-  ['pr-mat','pr-qty','pr-sup','pr-lot','pr-exp','pr-notes'].forEach(clearV);
-  loadPR();
-}
-
-// ── Pkg Inventory ─────────────────────────────────────────────────────────────
+// ── Pkg Inventory ──────────────────────────────────────────────────────────────
 async function loadPI() {
-  const rows = await api('/api/pkg_inventory','GET');
-  document.getElementById('piBody').innerHTML = rows.map(r=>{
-    const low = r.balance < r.min_level && r.min_level>0;
-    return `<tr class="${low?'table-warning':''}">
-      <td>${r.material_name}</td><td>${r.total_in}</td><td>${r.total_out}</td>
-      <td><b>${r.balance}</b></td><td>${r.unit}</td><td>${r.min_level||'-'}</td>
-      <td>${low?'<span class="badge-low">⚠️ منخفض</span>':'<span style="color:#16a34a">✅ طبيعي</span>'}</td></tr>`;
-  }).join('');
+  const rows=await api('GET','/api/pkg_inventory');
+  document.getElementById('pi-table').innerHTML=`<table class="table table-hover table-sm mb-0">
+    <thead><tr><th>المادة</th><th>إجمالي الاستلام</th><th>إجمالي الصرف</th><th>الرصيد</th><th>الحد الأدنى</th><th>الحالة</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const low=r.min_level>0&&r.balance<r.min_level;
+      const cls=r.balance<=0?'out-stock':low?'low-stock':'';
+      return `<tr class="${cls}">
+        <td><strong>${r.material_name}</strong></td>
+        <td>${fmt(r.total_in)} ${r.unit}</td>
+        <td>${fmt(r.total_out)} ${r.unit}</td>
+        <td><strong class="${r.balance<=0?'text-danger':low?'text-warning':'text-success'}">${fmt(r.balance)} ${r.unit}</strong></td>
+        <td>${r.min_level>0?r.min_level+' '+r.unit:'-'}</td>
+        <td>${r.balance<=0?badge('نفذ','danger'):low?badge('منخفض','warning'):badge('متوفر','success')}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
 }
 
-// ── Pkg Dispatches ────────────────────────────────────────────────────────────
-async function loadPD() {
-  const rows = await api('/api/pkg_dispatches','GET');
-  document.getElementById('pdBody').innerHTML = rows.map(r=>`
-    <tr><td><code>${r.batch_no}</code></td><td>${r.material_name}</td>
-    <td>${r.qty} ${r.unit}</td><td>${r.purpose||'-'}</td>
-    <td>${r.dispatch_date||r.created_at?.split('T')[0]}</td>
-    <td>${r.created_by||'-'}</td>
-    <td><button class="btn-del" onclick="del('pkg_dispatches',${r.id})">🗑️</button></td></tr>`).join('');
-}
-
-async function addPD() {
-  const mat=v('pd-mat'), qty=v('pd-qty');
-  if(!mat||!qty) return alert('أدخل اسم المادة والكمية');
-  await api('/api/pkg_dispatches','POST',{
-    material_name:mat, qty:parseFloat(qty), unit:v('pd-unit'),
-    purpose:v('pd-purpose'), dispatch_date:v('pd-date'), notes:v('pd-notes')
+// ── Pkg Dispatch ──────────────────────────────────────────────────────────────
+async function savePD() {
+  if(!v('pd-mat')||!v('pd-qty')){alert('أدخل اسم المادة والكمية');return;}
+  const r=await api('POST','/api/pkg_dispatches',{
+    material_name:v('pd-mat'),qty:parseFloat(v('pd-qty')),unit:v('pd-unit'),
+    purpose:v('pd-purpose'),fg_batch:v('pd-fgbatch'),
+    dispatch_date:v('pd-date')||today(),notes:v('pd-notes')
   });
-  ['pd-mat','pd-qty','pd-purpose','pd-notes'].forEach(clearV);
-  loadPD();
+  if(r.batch_no){
+    alert(`✅ تم الحفظ\nرقم باتش الصرف: ${r.batch_no}`);
+    ['pd-mat','pd-qty','pd-purpose','pd-fgbatch','pd-notes'].forEach(id=>s(id,''));
+    s('pd-date',today()); loadPD();
+  }
+}
+
+async function loadPD() {
+  const rows=await api('GET','/api/pkg_dispatches');
+  document.getElementById('pd-table').innerHTML=`<table class="table table-hover table-sm mb-0">
+    <thead><tr><th>باتش الصرف</th><th>المادة</th><th>الكمية</th><th>الغرض</th><th>ربط بـ (FG)</th><th>التاريخ</th><th></th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td>${batchBadge(r.batch_no)}</td>
+      <td>${r.material_name}</td>
+      <td><strong>${fmt(r.qty)}</strong> ${r.unit}</td>
+      <td>${r.purpose||'-'}</td>
+      <td>${r.fg_batch?`<span class="badge bg-info text-dark">${r.fg_batch}</span>`:'-'}</td>
+      <td>${r.dispatch_date||'-'}</td>
+      <td><button class="btn btn-xs btn-outline-danger" onclick="del('pkg_dispatches',${r.id},loadPD)">🗑</button></td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 // ── Production ────────────────────────────────────────────────────────────────
-async function loadPP() {
-  const rows = await api('/api/production','GET');
-  document.getElementById('ppBody').innerHTML = rows.map(r=>`
-    <tr><td><code>${r.batch_no}</code></td><td>${r.product_name}</td>
-    <td>${r.customer||'-'}</td><td>${r.qty} ${r.unit}</td>
-    <td>${r.production_date||r.created_at?.split('T')[0]}</td>
-    <td>${r.expiry_date||'-'}</td><td>${r.created_by||'-'}</td>
-    <td><button class="btn-del" onclick="del('production',${r.id})">🗑️</button></td></tr>`).join('');
+async function savePP() {
+  if(!v('pp-prod')||!v('pp-qty')){alert('أدخل اسم المنتج والكمية');return;}
+  const r=await api('POST','/api/production',{
+    product_name:v('pp-prod'),qty:parseFloat(v('pp-qty')),unit:v('pp-unit'),
+    production_date:v('pp-date')||today(),expiry_date:v('pp-exp'),notes:v('pp-notes')
+  });
+  if(r.batch_no){
+    alert(`✅ تم الحفظ\nرقم باتش الإنتاج: ${r.batch_no}`);
+    ['pp-prod','pp-qty','pp-exp','pp-notes'].forEach(id=>s(id,''));
+    s('pp-date',today()); loadPP();
+  }
 }
 
-async function addPP() {
-  const prod=v('pp-prod'), qty=v('pp-qty');
-  if(!prod||!qty) return alert('أدخل اسم المنتج والكمية');
-  await api('/api/production','POST',{
-    product_name:prod, customer:v('pp-customer'),
-    qty:parseFloat(qty), unit:v('pp-unit'),
-    production_date:v('pp-date'), expiry_date:v('pp-exp'), notes:v('pp-notes')
+async function loadPP() {
+  const rows=await api('GET','/api/production');
+  const el=document.getElementById('pp-table');
+  if(!rows.length){el.innerHTML='<div class="p-3 text-muted text-center">لا توجد بيانات</div>';return;}
+  el.innerHTML=rows.map(r=>{
+    const custRows=r.customers||[];
+    const usedRM=r.dispatches_used||[];
+    const usedPKG=r.pkg_used||[];
+    const totalDist=custRows.reduce((s,c)=>s+(c.qty||0),0);
+    return `<div class="border-bottom p-3">
+      <div class="row align-items-start">
+        <div class="col-md-5">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            ${batchBadge(r.batch_no)}
+            <strong>${r.product_name}</strong>
+            ${r.expiry_date?`<small class="text-danger">⏰${r.expiry_date}</small>`:''}
+          </div>
+          <small class="text-muted">الكمية: <strong>${fmt(r.qty)} ${r.unit}</strong> | التاريخ: ${r.production_date||'-'}</small>
+          ${usedRM.length?`<div class="mt-1"><small class="text-muted">🧪 خامات مصروفة: ${usedRM.map(d=>`<span class="badge bg-light text-dark border">${d.material_name} ${fmt(d.qty)}${d.unit}</span>`).join(' ')}</small></div>`:''}
+          ${usedPKG.length?`<div class="mt-1"><small class="text-muted">📦 تعبئة مصروفة: ${usedPKG.map(d=>`<span class="badge bg-light text-dark border">${d.material_name} ${fmt(d.qty)}${d.unit}</span>`).join(' ')}</small></div>`:''}
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="fw-bold text-purple">👥 العملاء (${custRows.length}) — موزَّع: ${fmt(totalDist)} ${r.unit}</small>
+            <button class="btn btn-xs btn-outline-primary" onclick="openCustModal('${r.batch_no}','${r.unit}')">➕ إضافة عميل</button>
+          </div>
+          ${custRows.length?custRows.map(c=>`
+            <div class="customer-row d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${c.customer}</strong>
+                ${c.qty?`<span class="ms-2 text-muted small">${fmt(c.qty)} ${c.unit}</span>`:''}
+                ${c.invoice_no?`<span class="ms-1 badge bg-light text-dark border small">${c.invoice_no}</span>`:''}
+                ${c.dispatch_date?`<span class="ms-1 text-muted small">${c.dispatch_date}</span>`:''}
+              </div>
+              <button class="btn btn-xs btn-outline-danger" onclick="del('batch_customers',${c.id},loadPP)">🗑</button>
+            </div>`).join('')
+          :'<small class="text-muted">لم يتم إضافة عملاء بعد</small>'}
+        </div>
+        <div class="col-md-1 text-end">
+          <button class="btn btn-xs btn-outline-danger" onclick="del('production',${r.id},loadPP)">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCustModal(batchNo, unit) {
+  s('cust-batch-no', batchNo);
+  s('cust-name',''); s('cust-qty',''); s('cust-inv',''); s('cust-notes','');
+  s('cust-date',today());
+  s('cust-unit', unit||'kg');
+  custModal.show();
+}
+
+async function saveCust() {
+  const bn=v('cust-batch-no');
+  if(!bn||!v('cust-name')){alert('أدخل رقم الباتش واسم العميل');return;}
+  await api('POST','/api/batch_customers',{
+    batch_no:bn, customer:v('cust-name'), qty:parseFloat(v('cust-qty'))||null,
+    unit:v('cust-unit'), dispatch_date:v('cust-date')||today(),
+    invoice_no:v('cust-inv'), notes:v('cust-notes')
   });
-  ['pp-prod','pp-customer','pp-qty','pp-exp','pp-notes'].forEach(clearV);
+  custModal.hide();
   loadPP();
 }
 
-// ── Trace ─────────────────────────────────────────────────────────────────────
-async function doTrace() {
-  const q = document.getElementById('traceQ').value.trim();
-  if(!q) return;
-  const d = await api('/api/trace?q='+encodeURIComponent(q),'GET');
-  const area = document.getElementById('traceResults');
-  if(!d.results||!d.results.length) {
-    area.innerHTML='<div class="card p-3 text-center text-muted">لا توجد نتائج / No results found</div>';
-    return;
-  }
-  area.innerHTML=`<div class="card p-3"><table class="table table-sm">
-    <thead><tr><th>رقم الدفعة</th><th>المادة/المنتج</th><th>المصدر</th><th>التاريخ</th></tr></thead>
-    <tbody>${d.results.map(r=>`<tr><td><code>${r.batch_no}</code></td><td>${r.material_name}</td>
-    <td><span class="badge bg-secondary">${r.source}</span></td>
-    <td>${r.created_at?.split('T')[0]||'-'}</td></tr>`).join('')}</tbody></table></div>`;
-}
-
-// ── Materials ─────────────────────────────────────────────────────────────────
-async function loadMaterials() {
-  const mats  = await api('/api/materials','GET');
-  const pmats = await api('/api/pkg_materials','GET');
-  document.getElementById('matList').innerHTML = mats.map(m=>
-    `<div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-      <span>${m.name} <small class="text-muted">(${m.unit}, min: ${m.min_level})</small></span>
-      <button class="btn-del" onclick="del('materials',${m.id})">🗑️</button>
-    </div>`).join('') || '<p class="text-muted small">لا توجد مواد</p>';
-  document.getElementById('pmatList').innerHTML = pmats.map(m=>
-    `<div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-      <span>${m.name} <small class="text-muted">(${m.unit}, min: ${m.min_level})</small></span>
-      <button class="btn-del" onclick="del('pkg_materials',${m.id})">🗑️</button>
-    </div>`).join('') || '<p class="text-muted small">لا توجد مواد</p>';
-}
-
-async function addMat() {
-  const nm=v('mat-name'); if(!nm) return;
-  await api('/api/materials','POST',{name:nm, unit:'kg', min_level:parseFloat(v('mat-min')||0)});
-  clearV('mat-name'); clearV('mat-min'); loadMaterials();
-}
-
-async function addPMat() {
-  const nm=v('pmat-name'); if(!nm) return;
-  await api('/api/pkg_materials','POST',{name:nm, unit:'piece', min_level:parseFloat(v('pmat-min')||0)});
-  clearV('pmat-name'); clearV('pmat-min'); loadMaterials();
-}
-
 // ── Reports ───────────────────────────────────────────────────────────────────
-async function loadReport(type) {
-  currentReport = type;
-  const d = await api(`/api/report/${type}`,'GET');
-  reportData = d;
-  const titles = {raw:'تقرير المواد الخام / Raw Materials Report', pkg:'تقرير مواد التعبئة / Packaging Materials Report', prod:'تقرير الإنتاج / Production Report'};
-  let html = `<h6 class="fw-bold mb-3">${titles[type]||'التقرير'}</h6>`;
-  if(type==='prod') {
-    html+=`<table class="table table-sm table-bordered"><thead><tr><th>المنتج</th><th>العميل</th><th>إجمالي الكمية</th><th>الوحدة</th><th>عدد الدفعات</th></tr></thead><tbody>`;
-    html+=d.map(r=>`<tr><td>${r.product_name}</td><td>${r.customer||'-'}</td><td>${r.total_qty}</td><td>${r.unit}</td><td>${r.batches}</td></tr>`).join('');
+let lastReportData=[], lastReportType='';
+async function loadReport() {
+  const t=v('rep-type');
+  lastReportType=t;
+  const data=await api('GET',`/api/report/${t}`);
+  lastReportData=data;
+  const el=document.getElementById('rep-table');
+  if(t==='raw'||t==='pkg'){
+    el.innerHTML=`<div class="card-body p-0"><table class="table table-hover table-sm mb-0">
+      <thead><tr><th>المادة</th><th>إجمالي الاستلام</th><th>إجمالي الصرف</th><th>الرصيد</th><th>الوحدة</th></tr></thead>
+      <tbody>${data.map(r=>`<tr>
+        <td>${r.material_name}</td>
+        <td>${fmt(r.total_in)}</td>
+        <td>${fmt(r.total_out)}</td>
+        <td class="${r.balance<=0?'text-danger fw-bold':r.balance<(r.min_level||0)?'text-warning fw-bold':'text-success fw-bold'}">${fmt(r.balance)}</td>
+        <td>${r.unit}</td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr class="fw-bold table-secondary">
+        <td>الإجمالي</td>
+        <td>${fmt(data.reduce((s,r)=>s+r.total_in,0))}</td>
+        <td>${fmt(data.reduce((s,r)=>s+r.total_out,0))}</td>
+        <td>${fmt(data.reduce((s,r)=>s+r.balance,0))}</td><td></td>
+      </tr></tfoot></table></div>`;
   } else {
-    html+=`<table class="table table-sm table-bordered"><thead><tr><th>المادة</th><th>إجمالي وارد</th><th>إجمالي صادر</th><th>الرصيد</th><th>الوحدة</th></tr></thead><tbody>`;
-    html+=d.map(r=>`<tr class="${r.balance<0?'table-danger':''}"><td>${r.material_name}</td><td>${r.total_in}</td><td>${r.total_out}</td><td><b>${r.balance}</b></td><td>${r.unit}</td></tr>`).join('');
+    el.innerHTML=`<div class="card-body p-0"><table class="table table-hover table-sm mb-0">
+      <thead><tr><th>باتش الإنتاج</th><th>المنتج</th><th>الكمية</th><th>تاريخ الإنتاج</th><th>الانتهاء</th><th>العملاء</th><th>موزَّع</th></tr></thead>
+      <tbody>${data.map(r=>`<tr>
+        <td>${batchBadge(r.batch_no)}</td>
+        <td>${r.product_name}</td>
+        <td>${fmt(r.qty)} ${r.unit}</td>
+        <td>${r.production_date||'-'}</td>
+        <td class="${r.expiry_date?'text-danger':''}">${r.expiry_date||'-'}</td>
+        <td>${(r.customers||[]).map(c=>c.customer).join('، ')||'-'}</td>
+        <td>${fmt(r.total_distributed)} ${r.unit}</td>
+      </tr>`).join('')}</tbody></table></div>`;
   }
-  html+='</tbody></table>';
-  document.getElementById('reportArea').innerHTML = html;
 }
 
 function printReport() {
-  const el = document.getElementById('reportArea');
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"/>
-    <title>تقرير</title></head><body class="p-4">${el.innerHTML}</body></html>`);
+  const w=window.open('','_blank');
+  w.document.write(`<html dir="rtl"><head><meta charset="UTF-8"><title>تقرير</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    </head><body class="p-4">${document.getElementById('rep-table').innerHTML}</body></html>`);
   w.document.close(); w.print();
 }
 
 function exportCSV() {
-  if(!reportData||!reportData.length) return alert('لا توجد بيانات');
-  const keys = Object.keys(reportData[0]);
-  let csv = keys.join(',') + '\n';
-  csv += reportData.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
-  a.download = `report_${currentReport}_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
+  if(!lastReportData.length) return;
+  const keys=Object.keys(lastReportData[0]).filter(k=>k!=='customers');
+  const rows=[keys.join(','),...lastReportData.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))];
+  const blob=new Blob(['﻿'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`report_${lastReportType}_${today()}.csv`; a.click();
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function v(id) { return document.getElementById(id)?.value?.trim()||''; }
-function clearV(id) { const el=document.getElementById(id); if(el) el.value=''; }
-
-async function del(table, id) {
-  if(!confirm('حذف هذا السجل؟')) return;
-  await fetch(`/api/${table}/${id}`, {method:'DELETE'});
-  const loaders = {
-    receipts:loadRR, dispatches:loadRD,
-    pkg_receipts:loadPR, pkg_dispatches:loadPD,
-    production:loadPP, materials:loadMaterials, pkg_materials:loadMaterials,
-  };
-  if(loaders[table]) loaders[table]();
+// ── Trace ─────────────────────────────────────────────────────────────────────
+function updateTracePlaceholder() {
+  const t=v('trace-type');
+  const el=document.getElementById('trace-q');
+  if(t==='forward') el.placeholder='مثال: RM-00001 أو اسم الخامة أو باتش المورد';
+  else el.placeholder='مثال: FG-00001 أو اسم المنتج أو اسم العميل';
 }
 
-async function api(url, method='GET', body=null) {
-  const opts = {method, headers:{'Content-Type':'application/json'}};
-  if(body) opts.body = JSON.stringify(body);
-  const r = await fetch(url, opts);
-  if(r.status===401) { document.getElementById('loginScreen').style.display='flex'; return {}; }
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
+async function doTrace() {
+  const q=v('trace-q'); const t=v('trace-type');
+  if(!q){alert('أدخل كلمة البحث');return;}
+  const el=document.getElementById('trace-result');
+  el.innerHTML='<div class="text-center py-3">⏳ جاري البحث...</div>';
+  const endpoint=t==='forward'?'/api/trace/forward':'/api/trace/backward';
+  const data=await api('GET',`${endpoint}?q=${encodeURIComponent(q)}`);
+  if(!data.chain?.length){
+    el.innerHTML=`<div class="alert alert-warning">لم يُعثر على نتائج للبحث عن: <strong>${q}</strong></div>`;
+    return;
+  }
+  if(t==='forward') renderForwardTrace(data, el);
+  else renderBackwardTrace(data, el);
 }
+
+function renderForwardTrace(data, el) {
+  el.innerHTML=`<div class="alert alert-info small mb-3">🔍 تتبع أمامي للبحث: <strong>${data.query}</strong> — ${data.chain.length} نتيجة</div>`;
+  el.innerHTML+=data.chain.map((entry,i)=>{
+    const r=entry.receipt; const d=entry.dispatch; const p=entry.production;
+    return `<div class="trace-chain">
+      <small class="text-muted fw-bold">${i+1}. سلسلة التتبع</small>
+      <div class="trace-node node-receipt">
+        <span class="badge bg-success mb-1">📥 استلام خامة</span><br>
+        ${batchBadge(r.batch_no)} ${supBadge(r.supplier_batch)}<br>
+        <strong>${r.material_name}</strong> — ${fmt(r.qty)} ${r.unit}<br>
+        <small>المورد: ${r.supplier||'-'} | تاريخ: ${r.received_date||'-'}</small>
+      </div>
+      <div class="trace-arrow">⬇️</div>
+      <div class="trace-node node-dispatch">
+        <span class="badge bg-warning text-dark mb-1">📤 صرف خامة</span><br>
+        ${batchBadge(d.batch_no)}<br>
+        <strong>${d.material_name}</strong> — ${fmt(d.qty)} ${d.unit}<br>
+        <small>الغرض: ${d.purpose||'-'} | تاريخ: ${d.dispatch_date||'-'}</small>
+      </div>
+      ${p?`<div class="trace-arrow">⬇️</div>
+      <div class="trace-node node-production">
+        <span class="badge bg-primary mb-1">🏭 منتج نهائي</span><br>
+        ${batchBadge(p.batch_no)}<br>
+        <strong>${p.product_name}</strong> — ${fmt(p.qty)} ${p.unit}<br>
+        <small>تاريخ: ${p.production_date||'-'} | انتهاء: ${p.expiry_date||'-'}</small>
+      </div>
+      ${entry.customers?.length?`<div class="trace-arrow">⬇️</div>
+      <div class="trace-node node-customer">
+        <span class="badge bg-purple mb-1" style="background:#6f42c1">👥 العملاء</span><br>
+        ${entry.customers.map(c=>`<div class="customer-row"><strong>${c.customer}</strong> ${c.qty?` — ${fmt(c.qty)} ${c.unit}`:''} ${c.invoice_no?`(${c.invoice_no})`:''} ${c.dispatch_date?`<small>${c.dispatch_date}</small>`:''}</div>`).join('')}
+      </div>`:'<div class="trace-arrow text-muted">⬇️ لم يتم توزيع على عملاء بعد</div>'}
+      `:'<div class="trace-arrow text-muted">⬇️ لم يُربط بمنتج نهائي بعد</div>'}
+    </div>`;
+  }).join('');
+}
+
+function renderBackwardTrace(data, el) {
+  el.innerHTML=`<div class="alert alert-info small mb-3">🔍 تتبع خلفي للبحث: <strong>${data.query}</strong> — ${data.chain.length} نتيجة</div>`;
+  el.innerHTML+=data.chain.map((entry,i)=>{
+    const p=entry.production;
+    return `<div class="trace-chain">
+      <small class="text-muted fw-bold">${i+1}. سلسلة التتبع الخلفي</small>
+      ${entry.customers?.length?`<div class="trace-node node-customer">
+        <span class="badge mb-1" style="background:#6f42c1;color:#fff">👥 وُزِّع على العملاء</span><br>
+        ${entry.customers.map(c=>`<div class="customer-row"><strong>${c.customer}</strong> ${c.qty?` — ${fmt(c.qty)} ${c.unit}`:''} ${c.invoice_no?`(${c.invoice_no})`:''} ${c.dispatch_date?`<small>${c.dispatch_date}</small>`:''}</div>`).join('')}
+      </div><div class="trace-arrow">⬆️</div>`:''}
+      <div class="trace-node node-production">
+        <span class="badge bg-primary mb-1">🏭 منتج نهائي</span><br>
+        ${batchBadge(p.batch_no)}<br>
+        <strong>${p.product_name}</strong> — ${fmt(p.qty)} ${p.unit}<br>
+        <small>تاريخ: ${p.production_date||'-'} | انتهاء: ${p.expiry_date||'-'}</small>
+      </div>
+      <div class="trace-arrow">⬆️</div>
+      ${entry.raw_materials?.length?`<div class="trace-node node-dispatch">
+        <span class="badge bg-warning text-dark mb-1">📤 خامات مصروفة</span><br>
+        ${entry.raw_materials.map(rm=>`
+          <div class="mb-1">${batchBadge(rm.dispatch.batch_no)} <strong>${rm.dispatch.material_name}</strong> — ${fmt(rm.dispatch.qty)} ${rm.dispatch.unit}
+          ${rm.receipts?.length?`<br><small class="text-muted">مصادر: ${rm.receipts.map(rec=>`${batchBadge(rec.batch_no)} ${supBadge(rec.supplier_batch)} ${rec.supplier||''}`).join(' | ')}</small>`:''}
+          </div>`).join('')}
+      </div>`:''}
+      ${entry.pkg_materials?.length?`<div class="mt-2 trace-node" style="border-color:#20c997">
+        <span class="badge bg-teal mb-1" style="background:#20c997">📦 تعبئة مصروفة</span><br>
+        ${entry.pkg_materials.map(pm=>`
+          <div class="mb-1">${batchBadge(pm.dispatch.batch_no)} <strong>${pm.dispatch.material_name}</strong> — ${fmt(pm.dispatch.qty)} ${pm.dispatch.unit}
+          ${pm.receipts?.length?`<br><small class="text-muted">مصادر: ${pm.receipts.map(rec=>`${batchBadge(rec.batch_no)} ${supBadge(rec.supplier_batch)} ${rec.supplier||''}`).join(' | ')}</small>`:''}
+          </div>`).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── Materials ─────────────────────────────────────────────────────────────────
+async function loadMaterials() {
+  const mats=await api('GET','/api/materials');
+  const pmats=await api('GET','/api/pkg_materials');
+  document.getElementById('mat-list').innerHTML=`<table class="table table-sm">
+    <tbody>${mats.map(m=>`<tr><td>${m.name}</td><td>${m.unit}</td><td>${m.min_level||0}</td>
+    <td><button class="btn btn-xs btn-outline-danger" onclick="del('materials',${m.id},loadMaterials)">🗑</button></td></tr>`).join('')}
+    </tbody></table>`;
+  document.getElementById('pmat-list').innerHTML=`<table class="table table-sm">
+    <tbody>${pmats.map(m=>`<tr><td>${m.name}</td><td>${m.unit}</td><td>${m.min_level||0}</td>
+    <td><button class="btn btn-xs btn-outline-danger" onclick="del('pkg_materials',${m.id},loadMaterials)">🗑</button></td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function saveMat() {
+  if(!v('mat-name')) return;
+  await api('POST','/api/materials',{name:v('mat-name'),unit:v('mat-unit'),min_level:parseFloat(v('mat-min'))||0});
+  s('mat-name',''); loadMaterials();
+}
+
+async function savePMat() {
+  if(!v('pmat-name')) return;
+  await api('POST','/api/pkg_materials',{name:v('pmat-name'),unit:v('pmat-unit'),min_level:parseFloat(v('pmat-min'))||0});
+  s('pmat-name',''); loadMaterials();
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function del(table, id, cb) {
+  if(!confirm('هل أنت متأكد من الحذف؟')) return;
+  await api('DELETE',`/api/${table}/${id}`);
+  if(cb) cb();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async()=>{
+  const me=await api('GET','/api/me');
+  if(me.username){
+    currentUser=me.username;
+    document.getElementById('loginSection').style.display='none';
+    document.getElementById('appSection').classList.remove('d-none');
+    document.getElementById('navUser').textContent=currentUser;
+    initSSE(); loadDashboard(); loadMaterials();
+    s('rr-date',today()); s('rd-date',today());
+    s('pr-date',today()); s('pd-date',today());
+    s('pp-date',today()); s('cust-date',today());
+  }
+})();
 </script>
 </body>
 </html>
